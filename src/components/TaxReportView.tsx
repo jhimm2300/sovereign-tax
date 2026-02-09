@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useAppState } from "../lib/app-state";
 import { calculate } from "../lib/cost-basis";
 import { exportForm8949CSV, exportLegacyCSV, exportTurboTaxTXF, exportTurboTaxCSV } from "../lib/export";
@@ -18,6 +18,14 @@ export function TaxReportView() {
   const stGL = salesForYear.filter((s) => !s.isLongTerm).reduce((a, s) => a + s.gainLoss, 0);
   const ltGL = salesForYear.filter((s) => s.isLongTerm).reduce((a, s) => a + s.gainLoss, 0);
 
+  const [exportToast, setExportToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!exportToast) return;
+    const timer = setTimeout(() => setExportToast(null), 3000);
+    return () => clearTimeout(timer);
+  }, [exportToast]);
+
   const downloadCSV = (content: string, filename: string) => {
     const blob = new Blob([content], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -26,6 +34,7 @@ export function TaxReportView() {
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
+    setExportToast(filename);
   };
 
   return (
@@ -82,7 +91,7 @@ export function TaxReportView() {
               <button className="btn-secondary" onClick={() => downloadCSV(exportTurboTaxTXF(salesForYear, selectedYear), `turbotax_${selectedYear}.txf`)}>
                 📑 TurboTax TXF
               </button>
-              <button className="btn-secondary" onClick={() => exportForm8949PDF(salesForYear, selectedYear, selectedMethod)}>
+              <button className="btn-secondary" onClick={() => { exportForm8949PDF(salesForYear, selectedYear, selectedMethod); setExportToast(`form_8949_${selectedYear}_${selectedMethod}.pdf`); }}>
                 📄 PDF Report
               </button>
             </div>
@@ -125,6 +134,17 @@ export function TaxReportView() {
             ))}
           </div>
         </>
+      )}
+
+      {/* Export toast notification */}
+      {exportToast && (
+        <div className="fixed bottom-6 right-6 bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50 animate-fade-in">
+          <span className="text-lg">✓</span>
+          <div>
+            <div className="font-medium text-sm">Export Complete</div>
+            <div className="text-xs opacity-90">{exportToast}</div>
+          </div>
+        </div>
       )}
     </div>
   );

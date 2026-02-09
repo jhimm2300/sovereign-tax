@@ -22,6 +22,7 @@ const KEYS = {
   encryptionSalt: "sovereign-tax-encryption-salt",
   auditLog: "sovereign-tax-audit-log",
   priceCache: "sovereign-tax-price-cache",
+  tosAccepted: "sovereign-tax-tos-accepted",
 };
 
 /** Keys that hold sensitive financial data and should be encrypted */
@@ -351,6 +352,18 @@ export async function restoreAllData(data: {
   saveImportHistory(data.importHistory);
   saveAuditLog(data.auditLog);
   savePreferences(data.preferences);
+}
+
+// ======================================================================
+// Terms of Service acceptance
+// ======================================================================
+
+export function hasTOSAccepted(): boolean {
+  return localStorage.getItem(KEYS.tosAccepted) === "true";
+}
+
+export function saveTOSAccepted(): void {
+  localStorage.setItem(KEYS.tosAccepted, "true");
 }
 
 // ======================================================================

@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { AppStateProvider, useAppState } from "./lib/app-state";
 import { Sidebar } from "./components/Sidebar";
 import { LockScreen } from "./components/LockScreen";
 import { SetupPIN } from "./components/SetupPIN";
+import { TermsOfService } from "./components/TermsOfService";
 import { HoldingsView } from "./components/HoldingsView";
 import { ImportView } from "./components/ImportView";
 import { TransactionsView } from "./components/TransactionsView";
@@ -17,16 +19,22 @@ import { TaxLossHarvestingView } from "./components/TaxLossHarvestingView";
 import { MultiYearDashboardView } from "./components/MultiYearDashboardView";
 import { LotMaturityView } from "./components/LotMaturityView";
 import { ReconciliationView } from "./components/ReconciliationView";
-import { hasPIN } from "./lib/persistence";
+import { hasPIN, hasTOSAccepted } from "./lib/persistence";
 
 function AppContent() {
   const { isUnlocked, selectedNav } = useAppState();
+  const [tosAccepted, setTosAccepted] = useState(() => hasTOSAccepted());
 
   if (!isUnlocked) {
-    if (hasPIN()) {
-      return <LockScreen />;
+    // First-time user: show TOS before PIN setup
+    if (!hasPIN()) {
+      if (!tosAccepted) {
+        return <TermsOfService onAccepted={() => setTosAccepted(true)} />;
+      }
+      return <SetupPIN isInitialSetup />;
     }
-    return <SetupPIN isInitialSetup />;
+    // Returning user: go straight to lock screen
+    return <LockScreen />;
   }
 
   const renderPage = () => {
