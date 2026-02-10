@@ -2,6 +2,9 @@ import { useState, useRef } from "react";
 import { useAppState } from "../lib/app-state";
 import { SetupPIN } from "./SetupPIN";
 
+const APP_VERSION = "1.0.2";
+const VERSION_CHECK_URL = "https://raw.githubusercontent.com/jhimm2300/sovereign-tax/main/version.json";
+
 export function SettingsView() {
   const state = useAppState();
   const [showChangePIN, setShowChangePIN] = useState(false);
@@ -11,6 +14,7 @@ export function SettingsView() {
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [updateStatus, setUpdateStatus] = useState<{ type: "checking" | "up-to-date" | "available" | "error"; message: string } | null>(null);
 
   if (showChangePIN) {
     return <SetupPIN isInitialSetup={false} onDone={() => setShowChangePIN(false)} />;
@@ -52,7 +56,7 @@ export function SettingsView() {
             Change PIN
           </button>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <div>
             <span className="text-gray-500">Hide Amounts</span>
             <p className="text-xs text-gray-400">Blur all BTC and USD values for privacy</p>
@@ -62,6 +66,21 @@ export function SettingsView() {
               type="checkbox"
               checked={state.privacyBlur}
               onChange={(e) => state.setPrivacyBlur(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+          </label>
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-gray-500">Live BTC Price</span>
+            <p className="text-xs text-gray-400">Fetch current price from CoinGecko (requires internet)</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={state.livePriceEnabled}
+              onChange={(e) => state.setLivePriceEnabled(e.target.checked)}
               className="sr-only peer"
             />
             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
@@ -180,11 +199,69 @@ export function SettingsView() {
         <h3 className="font-semibold mb-3">ℹ️ About</h3>
         <div className="flex items-center justify-between mb-2">
           <span className="text-gray-500">Sovereign Tax</span>
-          <span>Version 1.0</span>
+          <span>Version {APP_VERSION}</span>
         </div>
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-gray-400 mb-4">
           A privacy-focused Bitcoin tax calculator. All data is stored locally on your device.
         </p>
+
+        {/* Check for Updates */}
+        <div className="border-t pt-3">
+          <div className="flex items-center gap-3">
+            <button
+              className="btn-secondary text-sm"
+              disabled={updateStatus?.type === "checking"}
+              onClick={async () => {
+                setUpdateStatus({ type: "checking", message: "Checking for updates..." });
+                try {
+                  const response = await fetch(VERSION_CHECK_URL, { cache: "no-store" });
+                  if (!response.ok) throw new Error("Could not reach update server");
+                  const data = await response.json();
+                  const latest = data.latest;
+                  if (!latest) throw new Error("Invalid response");
+
+                  if (latest === APP_VERSION) {
+                    setUpdateStatus({ type: "up-to-date", message: `You're up to date! (v${APP_VERSION})` });
+                  } else {
+                    setUpdateStatus({
+                      type: "available",
+                      message: `Update available: v${latest} (you have v${APP_VERSION})`,
+                    });
+                  }
+                } catch (e: any) {
+                  setUpdateStatus({
+                    type: "error",
+                    message: `Could not check for updates. Make sure you're connected to the internet.`,
+                  });
+                }
+                setTimeout(() => setUpdateStatus(null), 8000);
+              }}
+            >
+              {updateStatus?.type === "checking" ? "Checking..." : "🔄 Check for Updates"}
+            </button>
+            {updateStatus && updateStatus.type !== "checking" && (
+              <span
+                className={`text-sm ${
+                  updateStatus.type === "up-to-date"
+                    ? "text-green-500"
+                    : updateStatus.type === "available"
+                    ? "text-orange-500 font-medium"
+                    : "text-red-400"
+                }`}
+              >
+                {updateStatus.type === "up-to-date" && "✓ "}
+                {updateStatus.type === "available" && "⬆ "}
+                {updateStatus.type === "error" && "⚠ "}
+                {updateStatus.message}
+              </span>
+            )}
+          </div>
+          {updateStatus?.type === "available" && (
+            <p className="text-xs text-gray-400 mt-2">
+              Visit <a href="https://sovereigntax.com" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">sovereigntax.com</a> to download the latest version.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

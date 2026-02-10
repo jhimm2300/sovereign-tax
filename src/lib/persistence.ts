@@ -214,11 +214,13 @@ export function saveImportHistory(history: Record<string, ImportRecord>): void {
 // Preferences (not encrypted — contains no sensitive financial data)
 export function loadPreferences(): Preferences {
   const prefs = loadJSON<Preferences>(KEYS.preferences);
-  return prefs ?? {
+  return {
     selectedYear: new Date().getFullYear(),
     selectedMethod: AccountingMethod.FIFO,
     appearanceMode: null,
     privacyBlur: false,
+    livePriceEnabled: true,
+    ...prefs,
   };
 }
 

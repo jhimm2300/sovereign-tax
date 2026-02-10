@@ -37,6 +37,8 @@ interface AppStateContextType {
   setPrivacyBlur: (blur: boolean) => void;
   selectedWallet: string | null;
   setSelectedWallet: (wallet: string | null) => void;
+  livePriceEnabled: boolean;
+  setLivePriceEnabled: (enabled: boolean) => void;
 
   // Security
   isUnlocked: boolean;
@@ -98,6 +100,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [appearanceMode, setAppearanceMode] = useState<string | null>(prefs.appearanceMode ?? null);
   const [privacyBlur, setPrivacyBlur] = useState(prefs.privacyBlur ?? false);
   const [selectedWallet, setSelectedWallet] = useState<string | null>(prefs.selectedWallet ?? null);
+  const [livePriceEnabled, setLivePriceEnabled] = useState(prefs.livePriceEnabled ?? true);
   const [isUnlocked, setIsUnlocked] = useState(false);
 
   const [priceState, setPriceState] = useState<PriceState>({
@@ -115,8 +118,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       appearanceMode,
       privacyBlur,
       selectedWallet,
+      livePriceEnabled,
     });
-  }, [selectedYear, selectedMethod, appearanceMode, privacyBlur, selectedWallet]);
+  }, [selectedYear, selectedMethod, appearanceMode, privacyBlur, selectedWallet, livePriceEnabled]);
 
   // Apply dark mode
   useEffect(() => {
@@ -396,6 +400,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setPrivacyBlur,
     selectedWallet,
     setSelectedWallet,
+    livePriceEnabled,
+    setLivePriceEnabled,
     isUnlocked,
     setIsUnlocked,
     unlockWithPIN,

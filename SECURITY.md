@@ -151,4 +151,4 @@ If you discover a security vulnerability, please report it via GitHub Issues wit
 
 ## License
 
-This software is distributed under the Business Source License 1.1 (BSL 1.1). The source code is available for security auditing and personal verification. See LICENSE for full terms.
+Copyright (c) 2026 Sovereign Tax Solutions LLC. All rights reserved. The source code is available for security auditing and build verification only. This is NOT open source software. A purchased license is required for use. See LICENSE for full terms.

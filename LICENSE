@@ -1,57 +1,130 @@
-Business Source License 1.1
+Sovereign Tax — Source Available License
 
-Parameters
+Copyright (c) 2026 Sovereign Tax Solutions LLC. All rights reserved.
 
-Licensor:             Joshua Himmelspach
-Licensed Work:        Sovereign Tax
-                      The Licensed Work is (c) 2025 Joshua Himmelspach
-Additional Use Grant: You may make use of the Licensed Work only for
-                      personal, non-commercial security auditing and
-                      verification purposes. You may build the Licensed
-                      Work from source solely to verify that the binary
-                      distribution matches the source code.
-Change Date:          2029-02-07
-Change License:       MIT License
+TERMS AND CONDITIONS
 
-Terms
+1. DEFINITIONS
 
-The Licensor hereby grants you the right to copy, modify, create
-derivative works, redistribute, and make non-production use of the
-Licensed Work. The Licensor may make an Additional Use Grant, above,
-permitting limited production use.
+   "Software" means the Sovereign Tax desktop application, including all
+   source code, object code, documentation, and associated files in this
+   repository.
 
-Effective on the Change Date, or the fourth anniversary of the first
-publicly available distribution of a specific version of the Licensed
-Work under this License, whichever comes first, the Licensor hereby
-grants you rights under the terms of the Change License, and the
-rights granted in the paragraph above terminate.
+   "Licensor" means Sovereign Tax Solutions LLC.
 
-If your use of the Licensed Work does not comply with the requirements
-currently in effect as described in this License, you must purchase a
-commercial license from the Licensor, its affiliated entities, or
-authorized resellers, or you must refrain from using the Licensed Work.
+   "You" means the individual or entity accessing or using the Software.
 
-All copies of the original and modified Licensed Work, and derivative
-works of the Licensed Work, are subject to this License. This License
-applies separately for each version of the Licensed Work and the
-Change Date may vary for each version of the Licensed Work released by
-the Licensor.
+2. SOURCE AVAILABILITY
 
-You must conspicuously display this License on each original or
-modified copy of the Licensed Work. If you receive the Licensed Work
-in original or modified form from a third party, the terms and
-conditions set forth in this License apply to your use of that work.
+   The source code of the Software is made publicly available for the
+   sole purposes of:
 
-Any use of the Licensed Work in violation of this License will
-automatically terminate your rights under this License for the current
-and all other versions of the Licensed Work.
+   (a) Security auditing — reviewing the code to verify the Software's
+       privacy, encryption, and data handling claims.
 
-This License does not grant you any right in any trademark or logo of
-the Licensor or its affiliates (provided that you may use a trademark
-or logo of the Licensor as expressly required by this License).
+   (b) Build verification — compiling the Software from source to confirm
+       that distributed binaries match the published source code.
 
-TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSED WORK IS
-PROVIDED ON AN "AS IS" BASIS. LICENSOR HEREBY DISCLAIMS ALL WARRANTIES
-AND CONDITIONS, EXPRESS OR IMPLIED, INCLUDING (WITHOUT LIMITATION)
-WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE,
-NON-INFRINGEMENT, AND TITLE.
+   (c) Educational review — reading the code to understand its
+       functionality for personal, non-commercial learning purposes.
+
+3. RESTRICTIONS
+
+   You may NOT, without a valid purchased license from the Licensor:
+
+   (a) Use the Software for any production, commercial, or personal
+       tax calculation or tax reporting purpose.
+
+   (b) Distribute, sublicense, sell, resell, lease, rent, loan, or
+       otherwise transfer the Software or any copy thereof to any
+       third party.
+
+   (c) Modify, adapt, or create derivative works based on the Software
+       for any purpose other than those expressly permitted in Section 2.
+
+   (d) Remove, alter, or obscure any copyright notices, license terms,
+       proprietary markings, or branding contained in the Software.
+
+   (e) Use the Software to provide tax calculation, tax preparation,
+       financial analysis, or any similar services to third parties,
+       whether or not for compensation.
+
+   (f) Incorporate any portion of the Software into another product or
+       service, whether commercial or non-commercial.
+
+   (g) Host, deploy, or make the Software available over a network for
+       access by third parties.
+
+   (h) Use any portion of the Software's code, algorithms, data
+       structures, or architecture to develop a competing product
+       or service.
+
+   (i) Attempt to circumvent, disable, or interfere with any license
+       verification, security features, or access controls in the
+       Software.
+
+4. PURCHASE REQUIREMENT
+
+   To use the Software for its intended purpose (Bitcoin tax calculation
+   and reporting), you must purchase a valid license from the Licensor
+   or its authorized resellers. Use of the Software without a valid
+   purchased license is a violation of this license and may constitute
+   copyright infringement under applicable law.
+
+5. NO OPEN SOURCE
+
+   This Software is NOT open source. The availability of source code
+   does not grant you any rights beyond those explicitly stated in
+   Section 2. This license is not compatible with and does not grant
+   rights under any open source license, including but not limited to
+   the MIT License, GPL, Apache License, or BSD License.
+
+6. COMPETITOR RESTRICTION
+
+   No employee, independent contractor, agent, or affiliate of any
+   competing provider of cryptocurrency tax, cryptocurrency accounting,
+   or digital asset management software is permitted to access, use,
+   review, or evaluate the Software or its source code without the
+   express written permission of the Licensor. By accessing this
+   repository, you represent and warrant that you are not acting on
+   behalf of a competitor.
+
+7. INTELLECTUAL PROPERTY
+
+   The Software, including all source code, algorithms, data structures,
+   user interface designs, documentation, and branding, is the exclusive
+   intellectual property of Sovereign Tax Solutions LLC and is protected
+   by copyright, trade secret, and other intellectual property laws.
+   All rights not expressly granted herein are reserved by the Licensor.
+
+8. NO WARRANTY
+
+   THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, ACCURACY, AND
+   NON-INFRINGEMENT. THE LICENSOR DOES NOT WARRANT THAT THE SOFTWARE
+   WILL MEET YOUR REQUIREMENTS, OPERATE WITHOUT INTERRUPTION, OR BE
+   ERROR-FREE.
+
+9. LIMITATION OF LIABILITY
+
+   IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
+   SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES ARISING OUT OF
+   OR RELATED TO THIS LICENSE OR THE SOFTWARE, REGARDLESS OF THE THEORY
+   OF LIABILITY. THE LICENSOR'S TOTAL AGGREGATE LIABILITY SHALL NOT
+   EXCEED THE AMOUNT YOU PAID FOR THE SOFTWARE.
+
+10. TERMINATION
+
+    Your rights under this license terminate automatically and immediately
+    if you violate any of its terms. Upon termination, you must destroy
+    all copies of the Software in your possession. Sections 3, 5, 6, 7,
+    8, 9, and 11 survive termination.
+
+11. GOVERNING LAW
+
+    This license shall be governed by and construed in accordance with
+    the laws of the State of Wyoming, United States, without regard to
+    its conflict of law provisions.
+
+For licensing inquiries, contact us at the email provided on our website.

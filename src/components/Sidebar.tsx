@@ -35,13 +35,14 @@ const navSections = [
 ];
 
 export function Sidebar() {
-  const { selectedNav, setSelectedNav, priceState, fetchPrice } = useAppState();
+  const { selectedNav, setSelectedNav, priceState, fetchPrice, livePriceEnabled } = useAppState();
 
   useEffect(() => {
+    if (!livePriceEnabled) return;
     fetchPrice();
     const interval = setInterval(fetchPrice, 60000); // Refresh every minute
     return () => clearInterval(interval);
-  }, [fetchPrice]);
+  }, [fetchPrice, livePriceEnabled]);
 
   return (
     <div className="sidebar w-56 flex flex-col h-full shrink-0">
@@ -93,29 +94,38 @@ export function Sidebar() {
 
       {/* Live BTC Price */}
       <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="text-orange-500 text-lg">₿</span>
-          {priceState.isLoading ? (
-            <span className="text-gray-400 text-sm">Loading...</span>
-          ) : priceState.currentPrice ? (
-            <span className="text-base font-bold tabular-nums">
-              {formatUSD(priceState.currentPrice)}
-            </span>
-          ) : (
-            <span className="text-gray-400 text-base">--</span>
-          )}
-          <span className="flex-1" />
-          <button
-            onClick={fetchPrice}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-sm"
-            title="Refresh price"
-          >
-            🔄
-          </button>
-        </div>
-        {priceState.lastUpdated && (
-          <div className="text-xs text-gray-400 mt-1">
-            Updated {timeAgo(priceState.lastUpdated)}
+        {livePriceEnabled ? (
+          <>
+            <div className="flex items-center gap-2">
+              <span className="text-orange-500 text-lg">₿</span>
+              {priceState.isLoading ? (
+                <span className="text-gray-400 text-sm">Loading...</span>
+              ) : priceState.currentPrice ? (
+                <span className="text-base font-bold tabular-nums">
+                  {formatUSD(priceState.currentPrice)}
+                </span>
+              ) : (
+                <span className="text-gray-400 text-base">--</span>
+              )}
+              <span className="flex-1" />
+              <button
+                onClick={fetchPrice}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-sm"
+                title="Refresh price"
+              >
+                🔄
+              </button>
+            </div>
+            {priceState.lastUpdated && (
+              <div className="text-xs text-gray-400 mt-1">
+                Updated {timeAgo(priceState.lastUpdated)}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="text-gray-400 text-lg">₿</span>
+            <span className="text-gray-400 text-sm">Offline mode</span>
           </div>
         )}
       </div>

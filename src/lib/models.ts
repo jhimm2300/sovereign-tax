@@ -90,6 +90,7 @@ export interface Preferences {
   appearanceMode?: string | null; // "light", "dark", or null (system)
   privacyBlur?: boolean;
   selectedWallet?: string | null; // null = all wallets
+  livePriceEnabled?: boolean; // true = fetch from CoinGecko, false = fully offline
 }
 
 export function createTransaction(params: Omit<Transaction, "id">): Transaction {
