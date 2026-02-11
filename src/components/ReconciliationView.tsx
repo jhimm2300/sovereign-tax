@@ -22,7 +22,7 @@ export function ReconciliationView() {
   return (
     <div className="p-8 max-w-5xl">
       <h1 className="text-3xl font-bold mb-1">Reconciliation</h1>
-      <p className="text-gray-500 mb-6">Match transfers between exchanges and identify missing data</p>
+      <p className="text-gray-500 mb-6">Match transfers between exchanges and identify missing data. Withdrawals to your own cold storage wallet will appear as unmatched — this is normal.</p>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-4 mb-6">
@@ -91,7 +91,10 @@ export function ReconciliationView() {
       {/* Unmatched Transfers */}
       {(result.unmatchedTransferOuts.length > 0 || result.unmatchedTransferIns.length > 0) && (
         <div className="card mb-6">
-          <h3 className="font-semibold mb-3">Unmatched Transfers</h3>
+          <h3 className="font-semibold mb-2">Unmatched Transfers</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+            Unmatched outgoing transfers are common and usually not an issue — most are withdrawals to your own cold storage or self-custody wallet. Unmatched incoming transfers may indicate a missing CSV import from another exchange.
+          </p>
           {result.unmatchedTransferOuts.map((t) => (
             <div key={t.id} className="flex items-center gap-3 py-2 text-sm border-b border-gray-100 dark:border-gray-800">
               <span className="text-orange-500">⚠</span>
