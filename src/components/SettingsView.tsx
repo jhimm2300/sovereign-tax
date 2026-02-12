@@ -3,7 +3,7 @@ import { useAppState } from "../lib/app-state";
 import { SetupPIN } from "./SetupPIN";
 
 const APP_VERSION = "1.0.5";
-const VERSION_CHECK_URL = "https://raw.githubusercontent.com/jhimm2300/sovereign-tax/main/version.json";
+const VERSION_CHECK_URL = "https://sovereigntax.io/version.json";
 
 export function SettingsView() {
   const state = useAppState();
