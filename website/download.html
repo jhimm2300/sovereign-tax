@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<!-- Last updated: 2026-02-12 | v1.1 — Added invoice verification gate -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Download Sovereign Tax</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="icon-256.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #000000;
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --accent: #f97316;
+  --accent-soft: rgba(249, 115, 22, 0.12);
+  --green: #30d158;
+  --red: #ff453a;
+  --text: #f5f5f7;
+  --text-secondary: #86868b;
+  --text-tertiary: #6e6e73;
+  --radius: 16px;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.container {
+  max-width: 640px;
+  width: 100%;
+  text-align: center;
+}
+
+.icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  margin-bottom: 32px;
+}
+
+h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: 8px;
+}
+
+h1 .accent {
+  color: var(--accent);
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  font-weight: 300;
+  margin-bottom: 48px;
+}
+
+/* Download Cards */
+.download-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.download-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 32px 24px;
+  text-decoration: none;
+  color: var(--text);
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.download-card:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.download-card .platform-icon {
+  font-size: 2.5rem;
+}
+
+.download-card .platform-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.download-card .platform-detail {
+  font-size: 0.82rem;
+  color: var(--text-tertiary);
+}
+
+.download-card .dl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 24px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 980px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-top: 8px;
+  transition: opacity 0.2s;
+}
+
+.download-card:hover .dl-btn {
+  opacity: 0.9;
+}
+
+/* Invoice Notice */
+.notice {
+  background: var(--accent-soft);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 32px;
+  text-align: left;
+}
+
+.notice h3 {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.notice p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+.notice .invoice-id {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  color: var(--accent);
+  user-select: all;
+}
+
+/* Getting Started */
+.steps {
+  text-align: left;
+  margin-bottom: 40px;
+}
+
+.steps h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+.step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.step-item:last-child {
+  border-bottom: none;
+}
+
+.step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.step-text {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+  line-height: 1.5;
+}
+
+.step-text strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* macOS note */
+.macos-note {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  text-align: left;
+  margin-bottom: 40px;
+}
+
+.macos-note h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.macos-note p {
+  font-size: 0.82rem;
+  color: var(--text-tertiary);
+  line-height: 1.55;
+  font-weight: 300;
+}
+
+/* Footer */
+.page-footer {
+  color: var(--text-tertiary);
+  font-size: 0.82rem;
+}
+
+.page-footer a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.page-footer a:hover {
+  color: var(--accent);
+}
+
+/* Success check animation */
+.success-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(48, 209, 88, 0.12);
+  border: 1px solid rgba(48, 209, 88, 0.3);
+  margin-bottom: 24px;
+}
+
+.success-check span {
+  color: var(--green);
+  font-size: 1.5rem;
+}
+
+/* Gate / Access Denied */
+.gate-container {
+  text-align: center;
+}
+
+.gate-icon {
+  font-size: 3rem;
+  margin-bottom: 24px;
+  opacity: 0.5;
+}
+
+.gate-container h1 {
+  font-size: 1.8rem;
+  margin-bottom: 12px;
+}
+
+.gate-container p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 300;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.gate-form {
+  display: flex;
+  gap: 12px;
+  max-width: 420px;
+  margin: 0 auto 32px;
+}
+
+.gate-form input {
+  flex: 1;
+  padding: 12px 16px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.gate-form input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.gate-form input:focus {
+  border-color: var(--accent);
+}
+
+.gate-form button {
+  padding: 12px 24px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.gate-form button:hover {
+  opacity: 0.9;
+}
+
+.gate-error {
+  color: var(--red);
+  font-size: 0.85rem;
+  margin-top: -16px;
+  margin-bottom: 24px;
+  display: none;
+}
+
+.gate-help {
+  color: var(--text-tertiary);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.gate-help a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* Hidden by default */
+#download-content { display: none; }
+#gate-content { display: none; }
+
+@media (max-width: 480px) {
+  .download-grid {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  .gate-form {
+    flex-direction: column;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ========== GATE: No valid invoice ========== -->
+  <div id="gate-content" class="gate-container">
+    <img src="icon-256.png" alt="Sovereign Tax" class="icon">
+    <div class="gate-icon">&#128274;</div>
+    <h1>Access your <span class="accent">download.</span></h1>
+    <p>Enter your BTCPay Invoice ID to access your purchase. You received this ID when you completed your Bitcoin payment.</p>
+
+    <div class="gate-form">
+      <input type="text" id="invoice-input" placeholder="Enter Invoice ID" autocomplete="off" spellcheck="false">
+      <button onclick="verifyInvoice()">Verify</button>
+    </div>
+    <p class="gate-error" id="gate-error">Invalid Invoice ID. Please check and try again.</p>
+
+    <p class="gate-help">
+      Purchased with a credit card? Your download link was delivered by <a href="https://sovereigntax.gumroad.com/l/epddkw">Gumroad</a>.<br>
+      Need help? <a href="support.html">Contact support</a>.
+    </p>
+    <p style="font-size:0.72rem;color:#666;margin-top:24px;">By purchasing, you agree to the <a href="terms-of-service.html" style="color:#e8912d;">Terms of Service</a> and <a href="privacy-policy.html" style="color:#e8912d;">Privacy Policy</a>.</p>
+  </div>
+
+  <!-- ========== DOWNLOAD: Valid invoice ========== -->
+  <div id="download-content">
+    <div class="success-check"><span>&#10003;</span></div>
+
+    <img src="icon-256.png" alt="Sovereign Tax" class="icon">
+
+    <h1>Payment <span class="accent">confirmed.</span></h1>
+    <p class="subtitle">Thank you for your purchase. Download Sovereign Tax below.</p>
+
+    <!-- Download Cards -->
+    <div class="download-grid">
+      <a href="downloads/SovereignTax-macOS.dmg" class="download-card">
+        <span class="platform-icon">&#63743;</span>
+        <span class="platform-name">macOS</span>
+        <span class="platform-detail">Apple Silicon &amp; Intel</span>
+        <span class="dl-btn">&#8595; Download .dmg</span>
+      </a>
+
+      <a href="downloads/SovereignTax-Windows.exe" class="download-card">
+        <span class="platform-icon">&#128187;</span>
+        <span class="platform-name">Windows</span>
+        <span class="platform-detail">Windows 10 / 11</span>
+        <span class="dl-btn">&#8595; Download .exe</span>
+      </a>
+    </div>
+
+    <!-- Invoice Notice -->
+    <div class="notice" id="invoice-notice">
+      <h3>&#8383; Your Invoice ID</h3>
+      <p id="invoice-notice-text"></p>
+    </div>
+
+    <!-- Getting Started -->
+    <div class="steps">
+      <h3>Getting started</h3>
+
+      <div class="step-item">
+        <span class="step-num">1</span>
+        <span class="step-text"><strong>Download</strong> the installer for your operating system above.</span>
+      </div>
+
+      <div class="step-item">
+        <span class="step-num">2</span>
+        <span class="step-text"><strong>Install</strong> the app. On macOS, drag to Applications. On Windows, run the installer.</span>
+      </div>
+
+      <div class="step-item">
+        <span class="step-num">3</span>
+        <span class="step-text"><strong>Create a PIN</strong> to encrypt your data. Accept the Terms of Service.</span>
+      </div>
+
+      <div class="step-item">
+        <span class="step-num">4</span>
+        <span class="step-text"><strong>Import your CSVs</strong> from Coinbase, Kraken, Gemini, or any other exchange.</span>
+      </div>
+    </div>
+
+    <!-- macOS Note -->
+    <div class="macos-note">
+      <h4>&#63743; macOS Users</h4>
+      <p>
+        This app is signed and notarized by Apple. Double-click the DMG, drag Sovereign Tax to your Applications folder, and launch it. No extra steps required.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Footer (always visible) -->
+  <div class="page-footer">
+    <p>&copy; 2026 Sovereign Tax Solutions LLC &nbsp;&middot;&nbsp; <a href="index.html">Home</a> &nbsp;&middot;&nbsp; <a href="terms-of-service.html">Terms of Service</a> &nbsp;&middot;&nbsp; <a href="privacy-policy.html">Privacy Policy</a> &nbsp;&middot;&nbsp; <a href="support.html">Support</a></p>
+    <p style="font-size:0.7rem;color:#555;margin-top:6px;">This software is for informational purposes only and does not constitute tax advice.</p>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  // BTCPay invoice IDs are typically 22-character alphanumeric strings
+  var INVOICE_PATTERN = /^[A-Za-z0-9]{10,30}$/;
+  var STORAGE_KEY = "st_invoices";
+
+  // Check URL params first (BTCPay redirect)
+  var params = new URLSearchParams(window.location.search);
+  var invoiceId = params.get("invoiceId") || params.get("invoice") || params.get("orderId");
+
+  // Check if user just came from BTCPay (referrer-based access)
+  var referrer = document.referrer || "";
+  var cameFromBTCPay = referrer.indexOf("pay.sovereigntax.io") !== -1;
+
+  // Check localStorage for previously verified invoices
+  var stored = getStoredInvoices();
+
+  if (invoiceId && INVOICE_PATTERN.test(invoiceId)) {
+    // Valid invoice in URL — grant access and store
+    storeInvoice(invoiceId);
+    showDownloads(invoiceId);
+  } else if (cameFromBTCPay) {
+    // Came directly from BTCPay checkout — grant access
+    // Try to extract invoice ID from referrer URL
+    var refInvoiceId = null;
+    try {
+      var refUrl = new URL(referrer);
+      refInvoiceId = refUrl.searchParams.get("invoiceId") || refUrl.pathname.split("/").pop();
+      if (refInvoiceId && !INVOICE_PATTERN.test(refInvoiceId)) refInvoiceId = null;
+    } catch(e) {}
+    if (refInvoiceId) {
+      storeInvoice(refInvoiceId);
+    } else {
+      storeInvoice("btcpay-" + Date.now());
+    }
+    showDownloads(refInvoiceId || null);
+  } else if (stored.length > 0) {
+    // Previously verified invoice exists
+    showDownloads(stored[stored.length - 1]);
+  } else {
+    // No invoice — show gate
+    showGate();
+  }
+
+  function showDownloads(id) {
+    document.getElementById("download-content").style.display = "block";
+    document.getElementById("gate-content").style.display = "none";
+    var noticeText = document.getElementById("invoice-notice-text");
+    if (id && id.indexOf("btcpay-") !== 0) {
+      noticeText.innerHTML = 'Your proof of purchase: <span class="invoice-id">' + id + '</span><br>Save this somewhere safe &mdash; you\'ll need it to re-download or contact support. No personal information was collected with this transaction.';
+    } else {
+      noticeText.innerHTML = 'Your proof of purchase is your <strong>BTCPay Invoice ID</strong> shown on the payment receipt. Click "View receipt" on the BTCPay confirmation page to find it.<br>Save it somewhere safe &mdash; you\'ll need it to re-download or contact support. No personal information was collected with this transaction.';
+    }
+    // Clean URL
+    if (window.history.replaceState) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }
+
+  function showGate() {
+    document.getElementById("gate-content").style.display = "block";
+    document.getElementById("download-content").style.display = "none";
+  }
+
+  function getStoredInvoices() {
+    try {
+      var data = localStorage.getItem(STORAGE_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function storeInvoice(id) {
+    var invoices = getStoredInvoices();
+    if (invoices.indexOf(id) === -1) {
+      invoices.push(id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(invoices));
+    }
+  }
+
+  // Expose verify function globally for the button
+  window.verifyInvoice = function() {
+    var input = document.getElementById("invoice-input").value.trim();
+    var errorEl = document.getElementById("gate-error");
+
+    if (input && INVOICE_PATTERN.test(input)) {
+      storeInvoice(input);
+      showDownloads(input);
+      errorEl.style.display = "none";
+    } else {
+      errorEl.style.display = "block";
+    }
+  };
+
+  // Allow Enter key to submit
+  document.getElementById("invoice-input").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") window.verifyInvoice();
+  });
+})();
+</script>
+
+</body>
+</html>

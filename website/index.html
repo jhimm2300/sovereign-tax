@@ -1,0 +1,2100 @@
+<!DOCTYPE html>
+<!-- Last updated: 2026-02-12 | v1.4 — Added breach warning section to differentiate on security -->
+<!-- Created: 2026-02-10 | v1.0 — Initial alternative landing page with glass aesthetic -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sovereign Tax — Bitcoin Tax Calculator | Beta Launch — Limited Time Pricing</title>
+<meta name="description" content="Calculate your Bitcoin capital gains, generate IRS Form 8949, and keep your financial data 100% private. One-time purchase. No subscription. No cloud.">
+<link rel="icon" type="image/png" href="icon-256.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ========================================
+   Sovereign Tax — Glass Aesthetic
+   Inspired by Apple's translucent UI
+   ======================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #000000;
+  --bg-subtle: #050508;
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-hover: rgba(255, 255, 255, 0.07);
+  --glass-strong: rgba(255, 255, 255, 0.06);
+  --accent: #f97316;
+  --accent-soft: rgba(249, 115, 22, 0.15);
+  --accent-glow: rgba(249, 115, 22, 0.08);
+  --text: #f5f5f7;
+  --text-secondary: #86868b;
+  --text-tertiary: #6e6e73;
+  --green: #30d158;
+  --red: #ff453a;
+  --radius: 16px;
+  --radius-sm: 12px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ===== Global ===== */
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+section {
+  padding: 120px 0;
+  position: relative;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+a:hover {
+  opacity: 0.8;
+}
+
+/* ===== Typography ===== */
+h1, h2, h3, h4 {
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+h1 {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+}
+
+h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.section-label {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.section-headline {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.section-sub {
+  text-align: center;
+  color: var(--text-secondary);
+  max-width: 560px;
+  margin: 0 auto 64px;
+  font-size: 1.1rem;
+  font-weight: 300;
+  line-height: 1.7;
+}
+
+/* ===== Glass Card ===== */
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  transition: background 0.3s, border-color 0.3s, transform 0.3s;
+}
+
+.glass:hover {
+  background: var(--glass-hover);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ===== Buttons ===== */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 40px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 980px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s;
+  letter-spacing: -0.01em;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 40px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 600;
+  border: 1.5px solid rgba(249, 115, 22, 0.4);
+  border-radius: 980px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s;
+  letter-spacing: -0.01em;
+}
+.btn-secondary:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  opacity: 1;
+}
+
+.btn-btc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 40px;
+  background: transparent;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  border: 1.5px solid var(--glass-border);
+  border-radius: 980px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s;
+  letter-spacing: -0.01em;
+}
+.btn-btc:hover {
+  background: var(--glass-hover);
+  border-color: rgba(255, 255, 255, 0.2);
+  opacity: 1;
+}
+
+/* ===== Animations ===== */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ========================================
+   NAVIGATION
+   ======================================== */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 16px 24px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nav-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.nav-brand img {
+  width: 28px;
+  height: 28px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 400;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.nav-links a:hover {
+  color: var(--text);
+  opacity: 1;
+}
+
+.nav-cta {
+  padding: 8px 20px !important;
+  font-size: 0.85rem !important;
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-radius: 980px;
+  font-weight: 500 !important;
+}
+.nav-cta:hover {
+  opacity: 0.9 !important;
+}
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+}
+
+/* ========================================
+   HERO
+   ======================================== */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 120px 24px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Large ambient glow */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.06) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 800px;
+}
+
+.hero-icon {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 32px;
+  border-radius: 20px;
+}
+
+.hero h1 {
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+.hero h1 .accent {
+  background: linear-gradient(135deg, #f97316, #fb923c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto 48px;
+  line-height: 1.7;
+  font-weight: 300;
+}
+
+.hero-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 48px;
+}
+
+.hero-meta {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.hero-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+
+.hero-meta-item .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.6;
+}
+
+/* ========================================
+   TRUST STRIP
+   ======================================== */
+.trust-strip {
+  padding: 48px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.trust-items {
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+  flex-wrap: wrap;
+}
+
+.trust-item {
+  text-align: center;
+}
+
+.trust-item .value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.trust-item .label {
+  font-size: 0.82rem;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+/* ========================================
+   PRIVACY FIRST — Core Message
+   ======================================== */
+.privacy-section {
+  overflow: hidden;
+}
+
+.privacy-section::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+  pointer-events: none;
+}
+
+.privacy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.privacy-card {
+  padding: 32px 28px;
+}
+
+.privacy-card .p-icon {
+  font-size: 1.5rem;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.privacy-card h3 {
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
+.privacy-card p {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.65;
+  font-weight: 300;
+}
+
+/* ========================================
+   BREACH WARNING
+   ======================================== */
+.breach-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.breach-section::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(255, 69, 58, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.breach-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: start;
+}
+
+.breach-copy .section-label {
+  color: var(--red);
+}
+
+.breach-copy h2 {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.breach-copy > p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.75;
+  font-weight: 300;
+  margin-bottom: 32px;
+}
+
+.breach-timeline {
+  list-style: none;
+}
+
+.breach-timeline li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.breach-timeline li:last-child {
+  border-bottom: none;
+}
+
+.breach-date {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--red);
+  opacity: 0.8;
+  min-width: 72px;
+  padding-top: 2px;
+}
+
+.breach-detail {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+  line-height: 1.55;
+}
+
+.breach-detail strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.breach-contrast {
+  padding: 40px;
+  position: relative;
+}
+
+.breach-contrast::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(48, 209, 88, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.breach-contrast h3 {
+  font-size: 1.15rem;
+  margin-bottom: 8px;
+  color: var(--green);
+}
+
+.breach-contrast .contrast-sub {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+  line-height: 1.65;
+  margin-bottom: 28px;
+}
+
+.contrast-points {
+  list-style: none;
+}
+
+.contrast-points li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+  line-height: 1.5;
+}
+
+.contrast-points .cp-icon {
+  color: var(--green);
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+.contrast-points strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .breach-layout {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
+/* ========================================
+   SCREENSHOT SHOWCASE
+   ======================================== */
+.showcase-section {
+  padding: 120px 0;
+}
+
+.showcase-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 48px;
+}
+
+.showcase-tab {
+  padding: 8px 20px;
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: 980px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+}
+.showcase-tab:hover {
+  background: var(--glass);
+  color: var(--text);
+}
+.showcase-tab.active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.showcase-display {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.showcase-item {
+  display: none;
+}
+.showcase-item.active {
+  display: block;
+}
+
+.showcase-img-wrap {
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.showcase-img-wrap img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.showcase-caption {
+  text-align: center;
+  margin-top: 20px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 300;
+}
+
+/* ========================================
+   HOW IT WORKS — INLINE
+   ======================================== */
+.how-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.how-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.how-step {
+  text-align: center;
+  padding: 40px 24px;
+}
+
+.how-step .step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+
+.how-step h3 {
+  margin-bottom: 10px;
+}
+
+.how-step p {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.65;
+  font-weight: 300;
+}
+
+/* ========================================
+   SECURITY DEEP DIVE
+   ======================================== */
+.security-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.security-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: start;
+}
+
+.security-copy .section-label {
+  margin-bottom: 16px;
+}
+
+.security-copy h2 {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.security-copy > p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.75;
+  font-weight: 300;
+  margin-bottom: 32px;
+}
+
+.security-list {
+  list-style: none;
+}
+
+.security-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+
+.security-list li:last-child {
+  border-bottom: none;
+}
+
+.security-list .check {
+  color: var(--green);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.security-list strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.security-quote-card {
+  padding: 40px;
+  position: relative;
+  margin-top: 16px;
+}
+
+.security-quote-card .quote-mark {
+  font-size: 4rem;
+  line-height: 1;
+  color: var(--accent);
+  opacity: 0.3;
+  position: absolute;
+  top: 24px;
+  left: 32px;
+}
+
+.security-quote-card blockquote {
+  position: relative;
+  z-index: 1;
+  font-size: 1.3rem;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--text);
+  padding-top: 24px;
+}
+
+.security-quote-card .quote-attr {
+  margin-top: 20px;
+  font-size: 0.88rem;
+  color: var(--text-tertiary);
+}
+
+.privacy-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 24px;
+  font-size: 0.92rem;
+  color: var(--accent);
+  font-weight: 500;
+}
+.privacy-link:hover {
+  opacity: 0.8;
+}
+
+/* ========================================
+   VERIFY — Source Code
+   ======================================== */
+.verify-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  text-align: center;
+}
+
+.verify-card {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 64px 48px;
+}
+
+.verify-pillars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin: 40px 0;
+  text-align: center;
+}
+
+.verify-pillar .vp-icon {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.verify-pillar h4 {
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.verify-pillar p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  font-weight: 300;
+}
+
+.btn-github {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 32px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 1.5px solid var(--glass-border);
+  border-radius: 980px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s;
+  font-family: inherit;
+}
+.btn-github:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--glass);
+  opacity: 1;
+}
+
+.btn-github svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* ========================================
+   FEATURES GRID
+   ======================================== */
+.features-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.feature-card {
+  padding: 32px 28px;
+}
+
+.feature-card .f-icon {
+  font-size: 1.3rem;
+  margin-bottom: 14px;
+  display: block;
+}
+
+.feature-card h3 {
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+}
+
+.feature-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.65;
+  font-weight: 300;
+}
+
+/* ========================================
+   SIMULATE SALE SPOTLIGHT
+   ======================================== */
+.spotlight-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.spotlight-section::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+  pointer-events: none;
+}
+
+.spotlight-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 64px;
+  align-items: center;
+}
+
+.spotlight-copy .section-label {
+  margin-bottom: 16px;
+}
+
+.spotlight-copy h2 {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.spotlight-copy p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.75;
+  font-weight: 300;
+  margin-bottom: 24px;
+}
+
+.spotlight-bullets {
+  list-style: none;
+}
+
+.spotlight-bullets li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  font-weight: 300;
+  line-height: 1.5;
+}
+
+.spotlight-bullets li .bullet-icon {
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 0.7rem;
+}
+
+.spotlight-screenshot {
+  position: relative;
+  z-index: 1;
+}
+
+/* ========================================
+   IRS COMPLIANCE CALLOUT
+   ======================================== */
+.compliance-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  text-align: center;
+}
+
+.compliance-card {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 56px 48px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.compliance-card::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(48, 209, 88, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.compliance-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  background: rgba(48, 209, 88, 0.12);
+  border: 1px solid rgba(48, 209, 88, 0.25);
+  border-radius: 980px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--green);
+  margin-bottom: 24px;
+}
+
+.compliance-badge .badge-check {
+  font-size: 0.85rem;
+}
+
+.compliance-card h2 {
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.compliance-card h2 .accent-green {
+  background: linear-gradient(135deg, #30d158, #34c759);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.compliance-card p {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  line-height: 1.75;
+  font-weight: 300;
+  max-width: 580px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.compliance-card p strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ========================================
+   PRICING COMPARISON
+   ======================================== */
+.pricing-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.pricing-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+}
+
+.pricing-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.pricing-table th,
+.pricing-table td {
+  padding: 16px 24px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 0.92rem;
+  font-weight: 300;
+}
+
+.pricing-table th {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-tertiary);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+}
+
+.pricing-table th:first-child,
+.pricing-table td:first-child {
+  text-align: left;
+  font-weight: 400;
+  color: var(--text);
+}
+
+.pricing-table th.hl {
+  color: var(--accent);
+}
+
+.pricing-table td.hl {
+  background: rgba(249, 115, 22, 0.03);
+}
+
+.pricing-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.price-tag {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.check-mark { color: var(--green); font-weight: 600; }
+.cross-mark { color: var(--red); opacity: 0.6; }
+.yes-sub { color: var(--red); font-weight: 500; }
+.no-sub { color: var(--green); font-weight: 600; }
+
+/* ========================================
+   PURCHASE / CTA
+   ======================================== */
+.cta-section {
+  padding: 140px 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-section::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.05) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.cta-section h2 {
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.cta-sub {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  font-weight: 300;
+  margin-bottom: 48px;
+  position: relative;
+  z-index: 1;
+}
+
+.cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.cta-platforms {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 48px;
+  position: relative;
+  z-index: 1;
+}
+
+.cta-platform {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--text-tertiary);
+}
+
+.cta-meta {
+  color: var(--text-tertiary);
+  font-size: 0.85rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* ========================================
+   FOOTER
+   ======================================== */
+footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 48px 24px;
+}
+
+.footer-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-left img {
+  width: 20px;
+  height: 20px;
+}
+
+.footer-left span {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.footer-links {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.footer-links a {
+  color: var(--text-tertiary);
+  font-size: 0.85rem;
+  transition: color 0.2s;
+}
+.footer-links a:hover {
+  color: var(--text);
+  opacity: 1;
+}
+
+.footer-disclaimer {
+  width: 100%;
+  text-align: center;
+  margin-top: 24px;
+  color: var(--text-tertiary);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 768px) {
+  section {
+    padding: 80px 0;
+  }
+
+  .privacy-grid,
+  .features-grid,
+  .how-steps,
+  .verify-pillars {
+    grid-template-columns: 1fr;
+  }
+
+  .security-layout,
+  .spotlight-layout {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .trust-items {
+    gap: 32px;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-meta {
+    gap: 20px;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .footer-inner {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .footer-links {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 16px;
+  }
+}
+
+/* ========================================
+   BETA LAUNCH BANNER
+   ======================================== */
+.beta-banner {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(249, 115, 22, 0.05));
+  border-bottom: 1px solid rgba(249, 115, 22, 0.3);
+  padding: 14px 24px;
+  text-align: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.beta-banner p {
+  font-size: 0.88rem;
+  color: var(--text);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.beta-banner .beta-tag {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border-radius: 980px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.beta-banner .beta-price {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* Push nav and hero down for beta banner */
+nav {
+  top: 46px !important;
+}
+
+.hero {
+  padding-top: 166px !important;
+}
+
+/* Beta notice card */
+.beta-notice {
+  max-width: 720px;
+  margin: 0 auto 64px;
+  padding: 32px 40px;
+  text-align: center;
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  background: rgba(249, 115, 22, 0.04);
+}
+
+.beta-notice h3 {
+  color: var(--accent);
+  margin-bottom: 12px;
+  font-size: 1.15rem;
+}
+
+.beta-notice p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  font-weight: 300;
+}
+
+.beta-notice p strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.beta-strike {
+  text-decoration: line-through;
+  opacity: 0.5;
+  font-weight: 400;
+}
+</style>
+</head>
+<body>
+
+<!-- ========================================
+     BETA LAUNCH BANNER
+     ======================================== -->
+<div class="beta-banner">
+  <p><span class="beta-tag">Beta Launch</span> Limited-time beta pricing: <span class="beta-price">$49.99</span> with Bitcoin / <span class="beta-price">$59.99</span> with card. Price increases next week.</p>
+</div>
+
+<!-- ========================================
+     NAVIGATION
+     ======================================== -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-brand">
+      <img src="icon-256.png" alt="Sovereign Tax">
+      Sovereign Tax
+    </a>
+    <div class="nav-links">
+      <a href="#privacy">Privacy</a>
+      <a href="#breaches">Security</a>
+      <a href="#features">Features</a>
+      <a href="#screenshots">App</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#source">Source Code</a>
+      <a href="support.html">Support</a>
+      <a href="#purchase" class="nav-cta">Buy Now</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ========================================
+     HERO
+     ======================================== -->
+<section class="hero" id="top">
+  <div class="hero-content">
+    <img src="icon-256.png" alt="Sovereign Tax" class="hero-icon reveal">
+
+    <h1 class="reveal">Bitcoin taxes.<br><span class="accent">Without the surveillance.</span></h1>
+
+    <p class="hero-sub reveal">
+      Calculate capital gains, generate IRS forms, and plan your tax strategy &mdash;
+      all without uploading a single transaction to someone else's server.
+    </p>
+
+    <div class="hero-buttons reveal">
+      <a class="btn-primary gumroad-button" href="https://sovereigntax.gumroad.com/l/epddkw">
+        Purchase with Card &mdash; <span class="beta-strike">$120</span> $59.99
+      </a>
+      <a class="btn-btc" href="https://pay.sovereigntax.io/apps/21zpxF4wbp4FWCkvJyt3PiNWbdSL/pos" style="border-color:var(--accent);background:var(--accent-soft);">
+        &#8383; Pay with Bitcoin &mdash; <span class="beta-strike">$100</span> $49.99 &nbsp;&#9679;&nbsp; Best Price
+      </a>
+    </div>
+    <p class="reveal" style="color:var(--accent);font-size:0.85rem;margin-bottom:12px;font-weight:500;">Beta pricing &mdash; save $10 more when you pay with Bitcoin</p>
+    <p class="reveal" style="color:var(--text-secondary);font-size:0.82rem;margin-bottom:48px;font-weight:400;">&#8383; Bitcoin payments &mdash; no payment processor fees, no personal info collected. Price increases next week.</p>
+
+    <div class="hero-meta reveal">
+      <span class="hero-meta-item"><span class="dot"></span> One-time purchase</span>
+      <span class="hero-meta-item"><span class="dot"></span> macOS &amp; Windows</span>
+      <span class="hero-meta-item"><span class="dot"></span> No account needed</span>
+      <span class="hero-meta-item"><span class="dot"></span> Source code available</span>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     BETA NOTICE
+     ======================================== -->
+<section style="padding:80px 0 0;">
+  <div class="container">
+    <div class="glass beta-notice reveal">
+      <h3>Beta Launch</h3>
+      <p>
+        Sovereign Tax is in <strong>beta</strong>. The core tax calculations &mdash; cost basis, capital gains,
+        Form 8949, and all IRS-compliant reporting &mdash; are thoroughly tested and accurate.
+        However, there may be a few rough edges in the interface as we continue to refine the experience.
+      </p>
+      <p style="margin-top:12px;">
+        As a thank you for early adopters, we're offering <strong>special beta pricing</strong> that
+        will increase next week. You'll receive all future updates at no additional cost.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     TRUST STRIP
+     ======================================== -->
+<section class="trust-strip">
+  <div class="container">
+    <div class="trust-items reveal">
+      <div class="trust-item">
+        <div class="value">0 bytes</div>
+        <div class="label">sent to the cloud</div>
+      </div>
+      <div class="trust-item">
+        <div class="value">AES-256</div>
+        <div class="label">encryption at rest</div>
+      </div>
+      <div class="trust-item">
+        <div class="value">100%</div>
+        <div class="label">offline capable</div>
+      </div>
+      <div class="trust-item">
+        <div class="value">From $49.99</div>
+        <div class="label">beta launch pricing</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     PRIVACY FIRST
+     ======================================== -->
+<section class="privacy-section" id="privacy">
+  <div class="container">
+    <div class="section-label reveal">Why Sovereign Tax</div>
+    <h2 class="section-headline reveal">The problem with every other<br>crypto tax tool</h2>
+    <p class="section-sub reveal">They all require you to upload your complete financial history to their cloud. Sovereign Tax solves the same problem without any of the risk.</p>
+
+    <div class="privacy-grid">
+      <div class="glass privacy-card reveal">
+        <span class="p-icon">&#128065;</span>
+        <h3>Your data on their servers</h3>
+        <p>Every major crypto tax platform requires full transaction history uploads. Your entire financial life, stored on infrastructure you don't control.</p>
+      </div>
+
+      <div class="glass privacy-card reveal">
+        <span class="p-icon">&#128184;</span>
+        <h3>$200/year subscriptions</h3>
+        <p>They charge you annually for the same data. Miss a renewal and lose access to your own records. Your tax history, held hostage.</p>
+      </div>
+
+      <div class="glass privacy-card reveal">
+        <span class="p-icon">&#128274;</span>
+        <h3>Sovereign Tax is different</h3>
+        <p>Your data stays on your device, encrypted with AES-256. No accounts. No cloud. No tracking. We literally cannot see your data.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     BREACH WARNING — Why Cloud Tax Tools Are a Risk
+     ======================================== -->
+<section class="breach-section" id="breaches">
+  <div class="container">
+    <div class="breach-layout reveal">
+      <div class="breach-copy">
+        <span class="section-label">They got hacked. You pay the price.</span>
+        <h2>Cloud-based crypto tax tools<br>keep getting <span style="color:var(--red)">breached.</span></h2>
+        <p>Every major crypto tax platform stores your financial data on their servers. When they get hacked &mdash; and they have &mdash; your transaction history, balances, and identity are exposed.</p>
+
+        <ul class="breach-timeline">
+          <li>
+            <span class="breach-date">Jan 2026</span>
+            <span class="breach-detail"><strong>Waltio</strong> &mdash; 50,000 users' tax data stolen including gains, losses, and account balances. Data sold on the dark web.</span>
+          </li>
+          <li>
+            <span class="breach-date">Nov 2025</span>
+            <span class="breach-detail"><strong>CoinTracker</strong> &mdash; Mixpanel breach exposed emails, IP-derived locations, device metadata, and transaction summaries.</span>
+          </li>
+          <li>
+            <span class="breach-date">Dec 2022</span>
+            <span class="breach-detail"><strong>CoinTracker</strong> &mdash; 1.5 million users' emails leaked. Victims later targeted in phishing attacks &mdash; one lost $1.7M.</span>
+          </li>
+          <li>
+            <span class="breach-date">2020</span>
+            <span class="breach-detail"><strong>CoinLedger</strong> &mdash; Customer data stolen and sold on a dark web forum.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="glass breach-contrast">
+          <h3>Sovereign Tax can't be breached.</h3>
+          <p class="contrast-sub">Not because we have better security than them. Because there's nothing to hack. We don't have your data. Period.</p>
+
+          <ul class="contrast-points">
+            <li>
+              <span class="cp-icon">&#10003;</span>
+              <span><strong>No servers</strong> &mdash; your data never leaves your computer. There's no database to breach.</span>
+            </li>
+            <li>
+              <span class="cp-icon">&#10003;</span>
+              <span><strong>No accounts</strong> &mdash; no email, no password, no identity stored anywhere.</span>
+            </li>
+            <li>
+              <span class="cp-icon">&#10003;</span>
+              <span><strong>No third-party analytics</strong> &mdash; no Mixpanel, no SendGrid, no tracking pixels. Zero attack surface.</span>
+            </li>
+            <li>
+              <span class="cp-icon">&#10003;</span>
+              <span><strong>AES-256 encrypted on your device</strong> &mdash; even if someone steals your laptop, your data is locked.</span>
+            </li>
+            <li>
+              <span class="cp-icon">&#10003;</span>
+              <span><strong>Open source</strong> &mdash; verify every claim yourself. Read the code. We have nothing to hide.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     SIMULATE SALE SPOTLIGHT
+     ======================================== -->
+<section class="spotlight-section" id="simulate">
+  <div class="container">
+    <div class="spotlight-layout reveal">
+      <div class="spotlight-copy">
+        <span class="section-label">Tax Planning</span>
+        <h2>Know your tax bill <span class="accent">before</span> you sell.</h2>
+        <p>
+          Most people discover their capital gains tax after filing. Sovereign Tax lets you simulate
+          any sale and see the exact tax impact instantly &mdash; which lots get used, the holding period,
+          and whether it's short-term or long-term.
+        </p>
+        <ul class="spotlight-bullets">
+          <li><span class="bullet-icon">&#9679;</span> Enter any BTC amount and price &mdash; see gains in real time</li>
+          <li><span class="bullet-icon">&#9679;</span> Compare FIFO, LIFO, HIFO, and Specific ID side by side</li>
+          <li><span class="bullet-icon">&#9679;</span> See which lots get consumed and their holding periods</li>
+          <li><span class="bullet-icon">&#9679;</span> Nothing is recorded &mdash; it's a simulation, clearly labeled</li>
+        </ul>
+      </div>
+      <div class="spotlight-screenshot">
+        <div class="showcase-img-wrap">
+          <img src="screenshots_original/simulate-sale.png" alt="Simulate Sale feature" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     SCREENSHOT SHOWCASE
+     ======================================== -->
+<section class="showcase-section" id="screenshots">
+  <div class="container">
+    <div class="section-label reveal" style="text-align:center;">The App</div>
+    <h2 class="section-headline reveal">See it in action.</h2>
+    <p class="section-sub reveal">Real screenshots. Your data never leaves your device.</p>
+
+    <div class="showcase-tabs reveal">
+      <button class="showcase-tab active" data-target="sc-holdings">Holdings</button>
+      <button class="showcase-tab" data-target="sc-tax-report">Tax Report</button>
+      <button class="showcase-tab" data-target="sc-compare">Compare Methods</button>
+      <button class="showcase-tab" data-target="sc-multi-year">Multi-Year</button>
+      <button class="showcase-tab" data-target="sc-simulate">Simulate Sale</button>
+      <button class="showcase-tab" data-target="sc-harvesting">Tax Harvesting</button>
+      <button class="showcase-tab" data-target="sc-lot-maturity">Lot Maturity</button>
+    </div>
+
+    <div class="showcase-display reveal">
+      <div class="showcase-item active" id="sc-holdings">
+        <div class="showcase-img-wrap">
+          <img src="screenshots_original/holdings.png" alt="Holdings view" loading="lazy">
+        </div>
+        <p class="showcase-caption">Track holdings across every exchange with real-time valuations and per-lot cost basis.</p>
+      </div>
+
+      <div class="showcase-item" id="sc-tax-report">
+        <div class="showcase-img-wrap">
+          <img src="screenshots_original/tax-report.png" alt="Tax Report" loading="lazy">
+        </div>
+        <p class="showcase-caption">Generate IRS-ready Form 8949 reports. Export as PDF, CSV, or TurboTax TXF.</p>
+      </div>
+
+      <div class="showcase-item" id="sc-compare">
+        <div class="showcase-img-wrap">
+          <img src="screenshots_original/compare-methods.png" alt="Compare Methods" loading="lazy">
+        </div>
+        <p class="showcase-caption">Compare FIFO, LIFO, and HIFO side-by-side. Find the method that minimizes your tax bill.</p>
+      </div>
+
+      <div class="showcase-item" id="sc-multi-year">
+        <div class="showcase-img-wrap">
+          <img src="screenshots_original/multi-year.png" alt="Multi-Year Dashboard" loading="lazy">
+        </div>
+        <p class="showcase-caption">Analyze tax history across years. Spot trends and plan ahead with lifetime summaries.</p>
+      </div>
+
+      <div class="showcase-item" id="sc-simulate">
+        <div class="showcase-img-wrap">
+          <img src="screenshots_original/simulate-sale.png" alt="Simulate Sale" loading="lazy">
+        </div>
+        <p class="showcase-caption">Preview exact tax consequences before selling. See which lots get used.</p>
+      </div>
+
+      <div class="showcase-item" id="sc-harvesting">
+        <div class="showcase-img-wrap">
+          <img src="screenshots_original/tax-harvesting.png" alt="Tax-Loss Harvesting" loading="lazy">
+        </div>
+        <p class="showcase-caption">Identify tax-loss harvesting opportunities to offset capital gains.</p>
+      </div>
+
+      <div class="showcase-item" id="sc-lot-maturity">
+        <div class="showcase-img-wrap">
+          <img src="screenshots_original/lot-maturity.png" alt="Lot Maturity" loading="lazy">
+        </div>
+        <p class="showcase-caption">See when each lot matures to long-term and the tax savings that come with it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     HOW IT WORKS
+     ======================================== -->
+<section class="how-section" id="how">
+  <div class="container">
+    <h2 class="section-headline reveal">Three steps. Done.</h2>
+    <p class="section-sub reveal">No signup. No API keys. No waiting for syncs.</p>
+
+    <div class="how-steps">
+      <div class="glass how-step reveal">
+        <span class="step-num">1</span>
+        <h3>Import</h3>
+        <p>Drop your exchange CSVs. Auto-detects Coinbase, Kraken, Gemini, and 10+ formats instantly.</p>
+      </div>
+
+      <div class="glass how-step reveal">
+        <span class="step-num">2</span>
+        <h3>Review</h3>
+        <p>Compare FIFO, LIFO, HIFO side-by-side. Pick the method that minimizes your tax bill.</p>
+      </div>
+
+      <div class="glass how-step reveal">
+        <span class="step-num">3</span>
+        <h3>Export</h3>
+        <p>Download Form 8949 PDF, TurboTax TXF, or CSV. Hand it to your CPA or file yourself.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     SECURITY DEEP DIVE
+     ======================================== -->
+<section class="security-section" id="security">
+  <div class="container">
+    <div class="security-layout reveal">
+      <div class="security-copy">
+        <span class="section-label">Security</span>
+        <h2>Built for people who<br>take privacy seriously.</h2>
+        <p>Your financial data is encrypted on your device and never transmitted anywhere. No accounts, no telemetry, no exceptions.</p>
+
+        <ul class="security-list">
+          <li>
+            <span class="check">&#10003;</span>
+            <span><strong>AES-256-GCM encryption</strong> &mdash; military-grade symmetric encryption for all data at rest.</span>
+          </li>
+          <li>
+            <span class="check">&#10003;</span>
+            <span><strong>PBKDF2 key derivation</strong> &mdash; 600,000 iterations make brute-force impractical.</span>
+          </li>
+          <li>
+            <span class="check">&#10003;</span>
+            <span><strong>PIN lockout protection</strong> &mdash; exponential backoff after failed attempts.</span>
+          </li>
+          <li>
+            <span class="check">&#10003;</span>
+            <span><strong>No cloud, no accounts, no telemetry</strong> &mdash; we cannot see your data.</span>
+          </li>
+          <li>
+            <span class="check">&#10003;</span>
+            <span><strong>Strict Content Security Policy</strong> &mdash; blocks all external scripts and tracking.</span>
+          </li>
+          <li>
+            <span class="check">&#10003;</span>
+            <span><strong>Fully offline capable</strong> &mdash; disable all network calls with one toggle.</span>
+          </li>
+        </ul>
+
+        <a href="privacy-policy.html" class="privacy-link">Read our Privacy Policy &rarr;</a>
+      </div>
+
+      <div>
+        <div class="glass security-quote-card">
+          <span class="quote-mark">&ldquo;</span>
+          <blockquote>
+            We don't have your data. We don't want your data. We built this so you'd never have to share it.
+          </blockquote>
+          <div class="quote-attr">&mdash; Sovereign Tax</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     VERIFY — SOURCE CODE
+     ======================================== -->
+<section class="verify-section" id="source">
+  <div class="container">
+    <div class="glass verify-card reveal">
+      <div class="section-label">Transparency</div>
+      <h2>Don't trust. Verify.</h2>
+      <p class="section-sub" style="margin-bottom: 32px;">
+        Every line of code is publicly available on GitHub. Read the source, audit the encryption,
+        and confirm that your data stays on your device.
+      </p>
+
+      <div class="verify-pillars">
+        <div class="verify-pillar">
+          <span class="vp-icon">&#128269;</span>
+          <h4>Fully Auditable</h4>
+          <p>Review exactly how your data is encrypted, stored, and processed.</p>
+        </div>
+        <div class="verify-pillar">
+          <span class="vp-icon">&#128737;</span>
+          <h4>No Hidden Code</h4>
+          <p>No obfuscation, no minified secrets, no phone-home calls.</p>
+        </div>
+        <div class="verify-pillar">
+          <span class="vp-icon">&#9989;</span>
+          <h4>Build It Yourself</h4>
+          <p>Clone the repo and compile from source. Verify it matches exactly.</p>
+        </div>
+      </div>
+
+      <a href="https://github.com/sovereigntax/sovereign-tax" target="_blank" rel="noopener noreferrer" class="btn-github">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        View Source on GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     FEATURES GRID
+     ======================================== -->
+<section class="features-section" id="features">
+  <div class="container">
+    <div class="section-label reveal" style="text-align:center;">Features</div>
+    <h2 class="section-headline reveal">Everything you need to file.<br>Nothing you don't.</h2>
+    <p class="section-sub reveal">Calculate to your advantage. Plan ahead. Export and file.</p>
+
+    <div class="features-grid">
+      <div class="glass feature-card reveal">
+        <span class="f-icon">&#128196;</span>
+        <h3>IRS-Ready Reports</h3>
+        <p>Form 8949 PDF &amp; CSV, TurboTax TXF import, and Schedule D summary. Short and long-term gains separated automatically.</p>
+      </div>
+
+      <div class="glass feature-card reveal">
+        <span class="f-icon">&#128200;</span>
+        <h3>4 Accounting Methods</h3>
+        <p>FIFO, LIFO, HIFO, and Specific Identification with manual lot selection. Compare side-by-side to find what saves you the most.</p>
+      </div>
+
+      <div class="glass feature-card reveal">
+        <span class="f-icon">&#128259;</span>
+        <h3>Every Exchange</h3>
+        <p>Import CSVs from Coinbase, Kraken, Gemini, Coinbase Pro, Celsius, Nexo, and more. Auto-detects columns and formats.</p>
+      </div>
+
+      <div class="glass feature-card reveal">
+        <span class="f-icon">&#128176;</span>
+        <h3>Income Classification</h3>
+        <p>Mining and rewards automatically classified as ordinary income. Schedule 1 ready.</p>
+      </div>
+
+      <div class="glass feature-card reveal">
+        <span class="f-icon">&#128301;</span>
+        <h3>Tax Planning</h3>
+        <p>Tax-loss harvesting dashboard, lot maturity tracker, multi-year analysis, and sale simulator to plan before tax season.</p>
+      </div>
+
+      <div class="glass feature-card reveal">
+        <span class="f-icon">&#128274;</span>
+        <h3>Encrypted Backups</h3>
+        <p>Password-protected backup files with integrity verification. Your data travels with you &mdash; not on our servers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     IRS COMPLIANCE
+     ======================================== -->
+<section class="compliance-section" id="compliance">
+  <div class="container">
+    <div class="glass compliance-card reveal">
+      <span class="compliance-badge"><span class="badge-check">&#9745;</span> IRS Compliant</span>
+      <h2>Ready for the <span class="accent-green">2025 tax year</span> rules</h2>
+      <p>Starting tax year 2025, the IRS requires <strong>per-wallet cost basis tracking</strong> for cryptocurrency. Sovereign Tax supports both universal and per-wallet cost basis modes with a single toggle &mdash; so you're compliant from day one.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     PRICING COMPARISON
+     ======================================== -->
+<section class="pricing-section" id="pricing">
+  <div class="container">
+    <h2 class="section-headline reveal">Pay once. Own it forever.</h2>
+    <p class="section-sub reveal">Same tax calculations. No subscription. No surveillance.</p>
+
+    <div class="pricing-table-wrap reveal">
+      <table class="pricing-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th class="hl">Sovereign Tax</th>
+            <th>CoinTracker</th>
+            <th>Koinly</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Price</td>
+            <td class="hl"><span class="price-tag">$49.99&ndash;$59.99 once</span><br><span style="font-size:0.75rem;color:var(--accent);opacity:0.8;">Beta pricing &mdash; increases next week</span></td>
+            <td>$59&ndash;$599/yr</td>
+            <td>$49&ndash;$279/yr</td>
+          </tr>
+          <tr>
+            <td>Data stays on your device</td>
+            <td class="hl"><span class="check-mark">&#10003;</span></td>
+            <td><span class="cross-mark">&#10007;</span></td>
+            <td><span class="cross-mark">&#10007;</span></td>
+          </tr>
+          <tr>
+            <td>No account required</td>
+            <td class="hl"><span class="check-mark">&#10003;</span></td>
+            <td><span class="cross-mark">&#10007;</span></td>
+            <td><span class="cross-mark">&#10007;</span></td>
+          </tr>
+          <tr>
+            <td>Form 8949 + TurboTax</td>
+            <td class="hl"><span class="check-mark">&#10003;</span></td>
+            <td><span class="check-mark">&#10003;</span></td>
+            <td><span class="check-mark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>4 accounting methods</td>
+            <td class="hl"><span class="check-mark">&#10003;</span></td>
+            <td>Limited</td>
+            <td><span class="check-mark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>Specific ID lot picking</td>
+            <td class="hl"><span class="check-mark">&#10003;</span></td>
+            <td><span class="cross-mark">&#10007;</span></td>
+            <td><span class="cross-mark">&#10007;</span></td>
+          </tr>
+          <tr>
+            <td>Encrypted on device</td>
+            <td class="hl"><span class="check-mark">&#10003;</span></td>
+            <td><span class="cross-mark">&#10007;</span></td>
+            <td><span class="cross-mark">&#10007;</span></td>
+          </tr>
+          <tr>
+            <td>Works fully offline</td>
+            <td class="hl"><span class="check-mark">&#10003;</span></td>
+            <td><span class="cross-mark">&#10007;</span></td>
+            <td><span class="cross-mark">&#10007;</span></td>
+          </tr>
+          <tr>
+            <td>Source code reviewable</td>
+            <td class="hl"><span class="check-mark">&#10003;</span></td>
+            <td><span class="cross-mark">&#10007;</span></td>
+            <td><span class="cross-mark">&#10007;</span></td>
+          </tr>
+          <tr>
+            <td>Data breach history</td>
+            <td class="hl"><span class="no-sub">Impossible</span></td>
+            <td><span class="yes-sub">3 breaches</span></td>
+            <td><span class="yes-sub">1 breach</span></td>
+          </tr>
+          <tr>
+            <td>Subscription required</td>
+            <td class="hl"><span class="no-sub">No</span></td>
+            <td><span class="yes-sub">Yes</span></td>
+            <td><span class="yes-sub">Yes</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================
+     FINAL CTA
+     ======================================== -->
+<section class="cta-section" id="purchase">
+  <div class="container">
+    <h2 class="reveal">Take control of your<br><span class="accent">Bitcoin tax reporting.</span></h2>
+    <p class="cta-sub reveal">One purchase. No subscription. No data collection. Ever.</p>
+
+    <div class="cta-platforms reveal">
+      <span class="cta-platform">&#63743; macOS</span>
+      <span class="cta-platform">&#128187; Windows</span>
+    </div>
+
+    <div class="cta-buttons reveal">
+      <a class="btn-primary gumroad-button" href="https://sovereigntax.gumroad.com/l/epddkw">
+        Purchase with Card &mdash; <span class="beta-strike">$120</span> $59.99
+      </a>
+      <a class="btn-btc" href="https://pay.sovereigntax.io/apps/21zpxF4wbp4FWCkvJyt3PiNWbdSL/pos" style="border-color:var(--accent);background:var(--accent-soft);">
+        &#8383; Pay with Bitcoin &mdash; <span class="beta-strike">$100</span> $49.99 &nbsp;&#9679;&nbsp; Best Price
+      </a>
+    </div>
+    <p class="reveal" style="color:var(--accent);font-size:0.88rem;margin-bottom:8px;font-weight:500;">&#8383; Beta pricing &mdash; save $10 more with Bitcoin. No fees, no personal info collected.</p>
+    <p class="cta-meta reveal">One-time purchase. Instant download. No account required. Price increases next week.</p>
+  </div>
+</section>
+
+<!-- ========================================
+     FOOTER
+     ======================================== -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">
+      <img src="icon-256.png" alt="">
+      <span>&copy; 2026 Sovereign Tax Solutions LLC</span>
+    </div>
+    <div class="footer-links">
+      <a href="#privacy">Privacy &amp; Security</a>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="https://github.com/sovereigntax/sovereign-tax" target="_blank" rel="noopener noreferrer">Source Code</a>
+      <a href="support.html">Support</a>
+      <a href="terms-of-service.html">Terms of Service</a>
+      <a href="privacy-policy.html">Privacy Policy</a>
+    </div>
+    <p class="footer-disclaimer">
+      For informational purposes only. This software assists with tax calculations but does not constitute tax advice. Consult a qualified tax professional for guidance specific to your situation.
+    </p>
+  </div>
+</footer>
+
+<!-- Gumroad Overlay Checkout -->
+<script src="https://gumroad.com/js/gumroad.js"></script>
+
+<!-- Scroll Reveal + Showcase Tabs -->
+<script>
+(function() {
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(function(el) {
+    observer.observe(el);
+  });
+
+  document.querySelectorAll('.showcase-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.showcase-tab').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelectorAll('.showcase-item').forEach(function(s) { s.classList.remove('active'); });
+      tab.classList.add('active');
+      var target = document.getElementById(tab.getAttribute('data-target'));
+      if (target) target.classList.add('active');
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -2,9 +2,14 @@ node_modules/
 dist/
 src-tauri/target/
 *.DS_Store
+
+# Binaries — deployed to Cloudflare, archived via GitHub Releases, never in git
 *.dmg
 *.exe
 *.msi
+*.AppImage
 *.zip
 builds/
-cloudflare-package/
+
+# Website downloads folder (binaries only — HTML/CSS/images are tracked)
+website/downloads/

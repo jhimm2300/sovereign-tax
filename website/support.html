@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<!-- Last updated: 2026-02-11 | v1.0 — Initial support page with CSV troubleshooting and macOS Gatekeeper guide -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Support — Sovereign Tax</title>
+<link rel="icon" type="image/png" href="icon-256.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #000000;
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-hover: rgba(255, 255, 255, 0.07);
+  --accent: #f97316;
+  --accent-soft: rgba(249, 115, 22, 0.12);
+  --green: #30d158;
+  --red: #ff453a;
+  --text: #f5f5f7;
+  --text-secondary: #86868b;
+  --text-tertiary: #6e6e73;
+  --radius: 16px;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Nav ── */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.nav-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.nav-brand img {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+}
+
+.nav-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 400;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover { color: var(--text); }
+
+.nav-links .nav-cta {
+  background: var(--accent);
+  color: #fff;
+  padding: 6px 16px;
+  border-radius: 980px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.nav-links .nav-cta:hover { opacity: 0.9; color: #fff; }
+
+/* ── Main Container ── */
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 100px 24px 80px;
+}
+
+/* ── Page Header ── */
+.page-header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+
+.page-header h1 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: 12px;
+}
+
+.page-header h1 .accent { color: var(--accent); }
+
+.page-header p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  font-weight: 300;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* ── Table of Contents ── */
+.toc {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 32px;
+  margin-bottom: 64px;
+}
+
+.toc h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+.toc-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toc-list a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 400;
+  transition: color 0.2s;
+}
+
+.toc-list a:hover { color: #fb923c; }
+
+.toc-list .toc-sub {
+  padding-left: 20px;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.toc-list .toc-sub:hover { color: var(--accent); }
+
+/* ── Section ── */
+.section {
+  margin-bottom: 72px;
+}
+
+.section-label {
+  display: inline-block;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 980px;
+  margin-bottom: 16px;
+}
+
+.section h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+
+.section h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 40px;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.section p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 300;
+  margin-bottom: 16px;
+  line-height: 1.75;
+}
+
+.section p strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* ── Steps ── */
+.step-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin-bottom: 20px;
+}
+
+.step-card .step-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.step-card h4 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.step-card p {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  font-weight: 300;
+  line-height: 1.7;
+  margin-bottom: 8px;
+}
+
+.step-card p:last-child { margin-bottom: 0; }
+
+/* ── Screenshot ── */
+.screenshot-wrap {
+  margin: 24px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+}
+
+.screenshot-wrap img {
+  width: 100%;
+  display: block;
+}
+
+.screenshot-caption {
+  padding: 12px 16px;
+  font-size: 0.82rem;
+  color: var(--text-tertiary);
+  font-weight: 400;
+  text-align: center;
+  border-top: 1px solid var(--glass-border);
+}
+
+/* ── Info Box ── */
+.info-box {
+  background: var(--accent-soft);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 20px 0;
+}
+
+.info-box.green {
+  background: rgba(48, 209, 88, 0.08);
+  border-color: rgba(48, 209, 88, 0.2);
+}
+
+.info-box.red {
+  background: rgba(255, 69, 58, 0.08);
+  border-color: rgba(255, 69, 58, 0.2);
+}
+
+.info-box h4 {
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--accent);
+}
+
+.info-box.green h4 { color: var(--green); }
+.info-box.red h4 { color: var(--red); }
+
+.info-box p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+  line-height: 1.65;
+  margin-bottom: 0;
+}
+
+/* ── Column Table ── */
+.column-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 0.88rem;
+}
+
+.column-table th {
+  text-align: left;
+  padding: 10px 14px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.column-table td {
+  padding: 10px 14px;
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+
+.column-table .required {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.column-table code {
+  background: var(--glass);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+/* ── Divider ── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--glass-border);
+  margin: 64px 0;
+}
+
+/* ── Footer ── */
+.page-footer {
+  text-align: center;
+  padding: 40px 24px;
+  border-top: 1px solid var(--glass-border);
+  color: var(--text-tertiary);
+  font-size: 0.82rem;
+}
+
+.page-footer a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.page-footer a:hover { color: var(--accent); }
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .page-header h1 { font-size: 2rem; }
+  .section h2 { font-size: 1.4rem; }
+  .nav-links { gap: 16px; }
+  .nav-links a { font-size: 0.78rem; }
+  .toc { padding: 20px; }
+  .step-card { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <img src="icon-256.png" alt="Sovereign Tax">
+      Sovereign Tax
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#features">Features</a>
+      <a href="index.html#pricing">Pricing</a>
+      <a href="index.html#purchase" class="nav-cta">Buy Now</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- ── Page Header ── -->
+  <div class="page-header">
+    <h1>Questions & <span class="accent">Troubleshooting</span></h1>
+    <p>Step-by-step guides to help you get the most out of Sovereign Tax. If something looks off, start here.</p>
+  </div>
+
+  <!-- ── Table of Contents ── -->
+  <div class="toc">
+    <h2>On this page</h2>
+    <ol class="toc-list">
+      <li><a href="#csv-import">CSV Import &mdash; How It Works</a></li>
+      <li class="toc-sub"><a href="#csv-auto" class="toc-sub">Auto-detection &amp; column mapping</a></li>
+      <li class="toc-sub"><a href="#csv-manual" class="toc-sub">Manually mapping columns</a></li>
+      <li class="toc-sub"><a href="#csv-noType" class="toc-sub">What if my CSV doesn't have a "Type" column?</a></li>
+      <li class="toc-sub"><a href="#csv-columns" class="toc-sub">Column reference table</a></li>
+      <li class="toc-sub"><a href="#csv-tips" class="toc-sub">Tips &amp; common issues</a></li>
+      <li><a href="#macos">macOS Installation &mdash; Gatekeeper Approval</a></li>
+      <li class="toc-sub"><a href="#macos-why" class="toc-sub">Why does macOS block the app?</a></li>
+      <li class="toc-sub"><a href="#macos-steps" class="toc-sub">How to approve Sovereign Tax</a></li>
+      <li><a href="#contact">Contact Support</a></li>
+    </ol>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- ── SECTION 1: CSV IMPORT ── -->
+  <!-- ══════════════════════════════════════════════ -->
+
+  <div class="section" id="csv-import">
+    <span class="section-label">CSV Import</span>
+    <h2>Importing Your Exchange Data</h2>
+    <p>Sovereign Tax accepts CSV files exported from any Bitcoin exchange &mdash; Coinbase, Kraken, Gemini, Swan, Strike, Cash App, and more. The app auto-detects your column headers and maps them to the correct fields. If something doesn't match, you can manually assign each column in seconds.</p>
+
+    <!-- Step 1: Import Screen -->
+    <h3 id="csv-auto">Step 1 &mdash; Drop or browse for your CSV</h3>
+    <p>Open the app and click <strong>Import Data</strong> in the sidebar. You'll see the import screen where you can drag and drop your CSV file, or click <strong>"Browse Files..."</strong> to select it from your file system.</p>
+    <p>Optionally, enter the exchange name (e.g., "Coinbase", "Kraken") in the <strong>Exchange Name</strong> field. This helps Sovereign Tax remember your column mapping for next time &mdash; so future imports from the same exchange are instant.</p>
+
+    <div class="screenshot-wrap">
+      <img src="screenshots_original/csv-import-screen.png" alt="Import screen showing drag-and-drop area and Browse Files button" loading="lazy">
+      <div class="screenshot-caption">The Import Transactions screen &mdash; drag your CSV here or click Browse Files</div>
+    </div>
+
+    <!-- Step 2: Auto-detection -->
+    <h3>Step 2 &mdash; Review the auto-detected columns</h3>
+    <p>After you select a file, Sovereign Tax reads the headers from your CSV and tries to auto-detect which column is which. It recognizes <strong>60+ common column name variations</strong> across major exchanges.</p>
+    <p>If everything matches, you'll see <strong>green checkmarks</strong> next to each mapped field and a green <strong>"All required fields mapped. Ready to import."</strong> message at the bottom.</p>
+
+    <div class="screenshot-wrap">
+      <img src="screenshots_original/csv-mapping-auto.png" alt="Column mapping with all fields auto-detected and green checkmarks" loading="lazy">
+      <div class="screenshot-caption">Auto-detected columns &mdash; green checkmarks mean the field is correctly mapped</div>
+    </div>
+
+    <div class="info-box green">
+      <h4>&#10003; If all fields show green checkmarks</h4>
+      <p>You're ready to go. Just click <strong>"Import Transactions"</strong> and your data will be imported. The app will automatically skip duplicate transactions if you've imported this file before.</p>
+    </div>
+
+    <!-- Step 3: Manual mapping -->
+    <h3 id="csv-manual">Step 3 &mdash; Manually mapping columns (if needed)</h3>
+    <p>If your CSV uses non-standard column names, the auto-detection may not match every field. You'll see <strong>"&mdash; Not mapped &mdash;"</strong> next to unrecognized fields and a <strong>yellow warning</strong> at the bottom listing the missing required fields.</p>
+
+    <div class="screenshot-wrap">
+      <img src="screenshots_original/csv-mapping-unmapped.png" alt="Column mapping showing unmapped fields with warnings" loading="lazy">
+      <div class="screenshot-caption">Unmapped columns &mdash; the app detected the CSV headers but couldn't auto-match them</div>
+    </div>
+
+    <p><strong>To fix this:</strong> click the dropdown next to each unmapped field and select the matching column from your CSV. The dropdown lists every column header found in your file. You need to match at minimum the <strong>Date</strong> and <strong>Amount</strong> fields (marked with *).</p>
+    <p>Here's an example of what your actual CSV data looks like alongside the mapping screen &mdash; use the column names in your file to guide your selections:</p>
+
+    <div class="screenshot-wrap">
+      <img src="screenshots_original/csv-mapping-with-file.png" alt="Side-by-side view of CSV file and mapping interface" loading="lazy">
+      <div class="screenshot-caption">Your CSV file columns (right) correspond to the mapping dropdowns (left)</div>
+    </div>
+
+    <p>Once you've mapped the required fields, the warning will disappear and you'll see the green <strong>"All required fields mapped"</strong> confirmation:</p>
+
+    <div class="screenshot-wrap">
+      <img src="screenshots_original/csv-mapping-ready.png" alt="All columns mapped with green Ready to import message" loading="lazy">
+      <div class="screenshot-caption">All fields mapped &mdash; click "Import Transactions" to finish</div>
+    </div>
+
+    <!-- No Type column -->
+    <h3 id="csv-noType">What if my CSV doesn't have a "Type" column?</h3>
+    <p>Some exchange exports don't include a column that says "Buy" or "Sell" for each row. When the app detects that no Type column is mapped, it will show an <strong>orange info box</strong> asking you to select a <strong>default transaction type</strong> that will apply to every row in the file.</p>
+
+    <div class="info-box">
+      <h4>&#9432; No Type column?</h4>
+      <p>If your export only contains one kind of transaction (e.g., all purchases), select <strong>"Buy"</strong> as the default. If your export contains mixed types, you may need to split the file or manually add a Type column before importing.</p>
+    </div>
+
+    <p>The default type options are: <strong>Buy</strong>, <strong>Sell</strong>, <strong>Transfer In</strong>, and <strong>Transfer Out</strong>.</p>
+
+    <!-- Column Reference Table -->
+    <h3 id="csv-columns">Column Reference</h3>
+    <p>Here's what each mapping field means and whether it's required:</p>
+
+    <table class="column-table">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Required</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Date</strong></td>
+          <td class="required">Yes</td>
+          <td>The date the transaction occurred. Supports most formats (MM/DD/YYYY, YYYY-MM-DD, ISO 8601, etc.)</td>
+        </tr>
+        <tr>
+          <td><strong>Type</strong></td>
+          <td>No*</td>
+          <td>Buy, Sell, Send, Receive, etc. If not mapped, you'll set a default type for all rows.</td>
+        </tr>
+        <tr>
+          <td><strong>Amount</strong></td>
+          <td class="required">Yes</td>
+          <td>The BTC quantity &mdash; how much Bitcoin was transacted (not the dollar value).</td>
+        </tr>
+        <tr>
+          <td><strong>Price</strong></td>
+          <td>No</td>
+          <td>The USD price of one Bitcoin at the time of the transaction.</td>
+        </tr>
+        <tr>
+          <td><strong>Total</strong></td>
+          <td>No</td>
+          <td>The total USD value of the transaction (Amount &times; Price). If you have this, Price is optional and vice versa.</td>
+        </tr>
+        <tr>
+          <td><strong>Fee</strong></td>
+          <td>No</td>
+          <td>Trading fees or commissions. Defaults to zero if not mapped. Fees are added to cost basis on buys and subtracted from proceeds on sells.</td>
+        </tr>
+        <tr>
+          <td><strong>Wallet</strong></td>
+          <td>No</td>
+          <td>Which wallet or sub-account this transaction belongs to.</td>
+        </tr>
+        <tr>
+          <td><strong>Exchange</strong></td>
+          <td>No</td>
+          <td>The exchange or platform where the transaction happened.</td>
+        </tr>
+        <tr>
+          <td><strong>Notes</strong></td>
+          <td>No</td>
+          <td>Any extra notes or description for the transaction.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Tips -->
+    <h3 id="csv-tips">Tips & Common Issues</h3>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <h4>Duplicate protection</h4>
+      </div>
+      <p>The app automatically detects and skips duplicate transactions. If you accidentally import the same file twice, duplicates will be filtered out. You'll see a count of how many were skipped.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <h4>Only Bitcoin transactions are imported</h4>
+      </div>
+      <p>Sovereign Tax focuses exclusively on Bitcoin. If your CSV contains other cryptocurrencies, those rows are automatically filtered out &mdash; only BTC and XBT transactions are processed.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <h4>Exchange mappings are remembered</h4>
+      </div>
+      <p>If you enter an exchange name before importing, Sovereign Tax saves your column mapping for that exchange. Next time you import from the same exchange, the columns will be pre-filled automatically.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <h4>Numbers are cleaned automatically</h4>
+      </div>
+      <p>Dollar signs ($), commas, spaces, and other formatting in your CSV are handled automatically. You don't need to clean your file before importing.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">5</div>
+        <h4>"Missing required fields" warning</h4>
+      </div>
+      <p>If you see this warning, it means <strong>Date</strong> and/or <strong>Amount</strong> haven't been mapped yet. Use the dropdowns to assign the correct columns from your CSV. Once both are mapped, the warning will clear.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">6</div>
+        <h4>Price vs. Total &mdash; you only need one</h4>
+      </div>
+      <p>If your CSV has the <strong>price per Bitcoin</strong>, map that to Price. If it has the <strong>total USD value</strong> of the trade, map that to Total. If you have both, map both &mdash; the app will use whichever is most accurate. You don't need both.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- ── SECTION 2: macOS GATEKEEPER ── -->
+  <!-- ══════════════════════════════════════════════ -->
+
+  <div class="section" id="macos">
+    <span class="section-label">Installation</span>
+    <h2>Installing Sovereign Tax</h2>
+
+    <h3 id="macos-why">macOS</h3>
+    <p>Sovereign Tax is signed and notarized by Apple. Installation is straightforward:</p>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <h4>Open the DMG</h4>
+      </div>
+      <p>Double-click the <strong>SovereignTax-macOS.dmg</strong> file you downloaded.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <h4>Drag to Applications</h4>
+      </div>
+      <p>Drag the <strong>Sovereign Tax</strong> app icon into your <strong>Applications</strong> folder.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <h4>Launch the app</h4>
+      </div>
+      <p>Open your Applications folder and double-click <strong>Sovereign Tax</strong>. It will open normally &mdash; no extra approval steps needed.</p>
+    </div>
+
+    <h3 id="macos-steps">Windows</h3>
+    <p>Windows users may see a <strong>SmartScreen</strong> warning on first launch. Click <strong>"More info"</strong> and then <strong>"Run anyway"</strong>. This is a one-time approval and is standard for independently distributed Windows software.</p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- ── SECTION 3: CONTACT SUPPORT ── -->
+  <!-- ══════════════════════════════════════════════ -->
+
+  <div class="section" id="contact">
+    <span class="section-label">Contact</span>
+    <h2>Still Need Help?</h2>
+    <p>If the guides above didn't solve your issue, reach out directly and we'll get back to you as soon as possible.</p>
+
+    <div class="step-card" style="text-align:center;padding:40px 28px;">
+      <h4 style="font-size:1.1rem;margin-bottom:8px;">Email Us</h4>
+      <p style="margin-bottom:16px;">Send a description of your issue along with your <strong>Invoice ID</strong> (from your BTCPay receipt or Gumroad order) so we can look you up.</p>
+      <a href="mailto:support@sovereigntax.io" style="display:inline-block;background:var(--accent);color:#fff;padding:12px 32px;border-radius:980px;font-weight:600;font-size:0.95rem;text-decoration:none;transition:opacity 0.2s;">support@sovereigntax.io</a>
+      <p style="color:var(--text-tertiary);font-size:0.8rem;margin-top:16px;margin-bottom:0;">We typically respond within 24 hours.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Footer ── -->
+<div class="page-footer">
+  <p>&copy; 2026 Sovereign Tax Solutions LLC &nbsp;&middot;&nbsp; <a href="index.html">Home</a> &nbsp;&middot;&nbsp; <a href="terms-of-service.html">Terms of Service</a> &nbsp;&middot;&nbsp; <a href="privacy-policy.html">Privacy Policy</a></p>
+  <p style="font-size:0.7rem;color:#555;margin-top:6px;">This software is for informational purposes only and does not constitute tax advice.</p>
+</div>
+
+</body>
+</html>
