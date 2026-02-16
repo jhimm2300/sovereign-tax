@@ -124,12 +124,19 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     });
   }, [selectedYear, selectedMethod, appearanceMode, privacyBlur, selectedWallet, livePriceEnabled]);
 
-  // Apply dark mode
+  // Apply appearance mode — default to dark when System is selected
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove("light", "dark");
-    if (appearanceMode === "light") root.classList.add("light");
-    else if (appearanceMode === "dark") root.classList.add("dark");
+    if (appearanceMode === "light") {
+      root.classList.add("light");
+    } else if (appearanceMode === "dark") {
+      root.classList.add("dark");
+    } else {
+      // System: check OS preference, default to dark
+      const prefersDark = !window.matchMedia("(prefers-color-scheme: light)").matches;
+      root.classList.add(prefersDark ? "dark" : "light");
+    }
   }, [appearanceMode]);
 
   // Clear encryption key on lock

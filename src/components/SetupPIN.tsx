@@ -1,10 +1,25 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAppState } from "../lib/app-state";
 import { savePINHash, savePINSalt } from "../lib/persistence";
 import { generateSalt, hashPINWithPBKDF2 } from "../lib/crypto";
+import logo from "../assets/icon-128.png";
+
+const satoshiQuotes = [
+  "If you don't believe it or don't get it, I don't have the time to try to convince you, sorry.",
+  "The root problem with conventional currency is all the trust that's required to make it work.",
+  "It might make sense just to get some in case it catches on.",
+  "The nature of Bitcoin is such that once version 0.1 was released, the core design was set in stone for the rest of its lifetime.",
+  "Lost coins only make everyone else's coins worth slightly more. Think of it as a donation to everyone.",
+  "I've been working on a new electronic cash system that's fully peer-to-peer, with no trusted third party.",
+  "With e-currency based on cryptographic proof, without the need to trust a third party middleman, money can be secure.",
+  "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks.",
+  "Writing a description for this thing for general audiences is bloody hard. There's nothing to relate it to.",
+  "In a few decades when the reward gets too small, the transaction fee will become the main compensation for nodes.",
+];
 
 export function SetupPIN({ isInitialSetup, onDone }: { isInitialSetup: boolean; onDone?: () => void }) {
   const { unlockWithPIN, changePIN } = useAppState();
+  const quote = useMemo(() => satoshiQuotes[Math.floor(Math.random() * satoshiQuotes.length)], []);
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
@@ -64,8 +79,18 @@ export function SetupPIN({ isInitialSetup, onDone }: { isInitialSetup: boolean; 
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-50 dark:bg-zinc-900">
-      <div className="text-5xl mb-6">{isInitialSetup ? "🛡️" : "🔄"}</div>
+    <div className="relative flex flex-col items-center justify-center h-screen bg-gray-50 dark:bg-zinc-900">
+      {/* Satoshi quote — top right easter egg */}
+      <div className="absolute top-4 right-5 max-w-xs text-right animate-[fadeInQuote_1.5s_ease-in-out_0.5s_both]">
+        <p className="text-xs italic text-orange-500/70 leading-relaxed">
+          "{quote}"
+        </p>
+        <p className="text-[10px] text-orange-500/40 mt-0.5">
+          — Satoshi Nakamoto
+        </p>
+      </div>
+
+      <img src={logo} alt="Sovereign Tax" className="w-12 h-12 rounded-xl mb-6" />
       <h1 className="text-2xl font-semibold mb-2">
         {isInitialSetup ? "Create Your PIN" : "Change PIN"}
       </h1>

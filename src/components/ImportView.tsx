@@ -5,7 +5,7 @@ import { ColumnMapping, isMappingValid, requiredFieldsMissing, isDualColumn } fr
 import { TransactionType, TransactionTypeDisplayNames } from "../lib/types";
 import { HelpPanel } from "./HelpPanel";
 
-type ImportStatus = { type: "success"; count: number; skipped: number; duplicates: number } | { type: "error"; message: string };
+type ImportStatus = { type: "success"; count: number; skipped: number; duplicates: number; nonBtcSkipped: number } | { type: "error"; message: string };
 
 export function ImportView() {
   const state = useAppState();
@@ -103,7 +103,7 @@ export function ImportView() {
     }
 
     const dedup = state.addTransactionsDeduped(result.transactions);
-    setImportStatus({ type: "success", count: dedup.added, skipped: result.skippedRows.length, duplicates: dedup.duplicates });
+    setImportStatus({ type: "success", count: dedup.added, skipped: result.skippedRows.length, duplicates: dedup.duplicates, nonBtcSkipped: 0 });
 
     // Record import
     const hash = await computeHash(pendingContent);

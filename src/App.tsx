@@ -59,11 +59,26 @@ function AppContent() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto">
-        {renderPage()}
-      </main>
+    <div className="flex flex-col h-screen overflow-hidden">
+      {/* Help bar */}
+      <div className="flex items-center justify-end px-4 py-1.5 border-b border-gray-200 dark:border-white/[0.06] bg-gray-50 dark:bg-white/[0.02] shrink-0">
+        <a
+          href="https://sovereigntax.io/help.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-medium text-orange-500 hover:text-orange-400 transition-colors flex items-center gap-1.5 bg-orange-500/10 hover:bg-orange-500/15 px-3 py-1 rounded-full"
+        >
+          <span>❓</span>
+          <span>Help Guide</span>
+          <span className="text-[10px]">↗</span>
+        </a>
+      </div>
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <main className="flex-1 overflow-y-auto">
+          {renderPage()}
+        </main>
+      </div>
     </div>
   );
 }

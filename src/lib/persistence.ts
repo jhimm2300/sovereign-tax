@@ -229,7 +229,7 @@ export function loadPreferences(): Preferences {
   return {
     selectedYear: new Date().getFullYear(),
     selectedMethod: AccountingMethod.FIFO,
-    appearanceMode: null,
+    appearanceMode: "dark",
     privacyBlur: false,
     livePriceEnabled: true,
     ...prefs,
@@ -398,7 +398,7 @@ export function clearAllData(): void {
   savePreferences({
     selectedYear: new Date().getFullYear(),
     selectedMethod: AccountingMethod.FIFO,
-    appearanceMode: null,
+    appearanceMode: "dark",
     privacyBlur: false,
     livePriceEnabled: true,
     selectedWallet: null,

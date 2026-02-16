@@ -1,0 +1,518 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #f97316;
+  --color-brand-light: #fb923c;
+  --color-brand-dark: #ea580c;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GLASS THEME — Dark mode (default) + Light mode option
+   Default is dark. User can switch via Settings → Theme.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Base Variables (Dark/Default) ─────────────────────────── */
+:root {
+  --bg: #0c0c0c;
+  --bg-subtle: #101012;
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-hover: rgba(255, 255, 255, 0.07);
+  --glass-strong: rgba(255, 255, 255, 0.06);
+  --accent: #f97316;
+  --accent-soft: rgba(249, 115, 22, 0.15);
+  --accent-glow: rgba(249, 115, 22, 0.08);
+  --text: #f5f5f7;
+  --text-secondary: #86868b;
+  --text-tertiary: #6e6e73;
+  --green: #30d158;
+  --red: #ff453a;
+  --radius: 16px;
+  --radius-sm: 12px;
+
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  background-color: var(--bg);
+}
+
+/* Dark mode — same as root defaults */
+.dark {
+  color: var(--text);
+  background-color: var(--bg);
+}
+
+/* ── Light Mode Variables ──────────────────────────────────── */
+.light {
+  --bg: #f8f9fa;
+  --bg-subtle: #f1f5f9;
+  --glass: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-hover: rgba(255, 255, 255, 0.95);
+  --glass-strong: rgba(255, 255, 255, 0.9);
+  --accent: #f97316;
+  --accent-soft: rgba(249, 115, 22, 0.12);
+  --accent-glow: rgba(249, 115, 22, 0.06);
+  --text: #1a1a2e;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --green: #16a34a;
+  --red: #dc2626;
+
+  color: var(--text);
+  background-color: var(--bg);
+  color-scheme: light;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+.light ::-webkit-scrollbar-thumb {
+  background: #a1a1aa;
+}
+.light ::-webkit-scrollbar-thumb:hover {
+  background: #71717a;
+}
+
+/* ── Tabular Numbers ───────────────────────────────────────── */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Glass Card ────────────────────────────────────────────── */
+.card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  padding: 16px;
+  transition: background 0.2s, border-color 0.2s;
+}
+.dark .card {
+  box-shadow: none;
+}
+.light .card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ── Sidebar ───────────────────────────────────────────────── */
+.sidebar {
+  background: rgba(255, 255, 255, 0.02);
+  border-right: 1px solid var(--glass-border);
+}
+.light .sidebar {
+  background: #f1f5f9;
+  border-right: 1px solid #e2e8f0;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  font-size: 13px;
+}
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+.light .sidebar-item:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+.sidebar-item.active {
+  background: var(--accent);
+  color: white;
+}
+.sidebar-item.active:hover {
+  background: var(--color-brand-dark);
+}
+
+/* ── Primary Button ────────────────────────────────────────── */
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-primary:hover {
+  background: var(--color-brand-dark);
+}
+.light .btn-primary:hover {
+  background: var(--color-brand-dark);
+}
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ── Secondary Button ──────────────────────────────────────── */
+.btn-secondary {
+  background: var(--glass-strong);
+  color: var(--text-secondary);
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-secondary:hover {
+  background: var(--glass-hover);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.light .btn-secondary {
+  background: #e2e8f0;
+  color: #475569;
+  border-color: transparent;
+}
+.light .btn-secondary:hover {
+  background: #cbd5e1;
+  color: #1e293b;
+  border-color: transparent;
+}
+
+/* ── Danger Button ─────────────────────────────────────────── */
+.btn-danger {
+  background: rgba(255, 69, 58, 0.1);
+  color: var(--red);
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  border: 1px solid rgba(255, 69, 58, 0.2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-danger:hover {
+  background: rgba(255, 69, 58, 0.15);
+  border-color: rgba(255, 69, 58, 0.3);
+}
+.light .btn-danger {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+/* ── Input ─────────────────────────────────────────────────── */
+.input {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  background: var(--glass);
+  color: var(--text);
+}
+.input:focus {
+  border-color: var(--accent);
+}
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+.light .input {
+  background: white;
+  border-color: #d1d5db;
+}
+
+/* ── Select ────────────────────────────────────────────────── */
+.select {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
+  background: var(--glass);
+  color: var(--text);
+  cursor: pointer;
+}
+.select:focus {
+  border-color: var(--accent);
+}
+.light .select {
+  background: white;
+  border-color: #d1d5db;
+}
+
+/* ── Status Badges ─────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.badge-green {
+  background: rgba(48, 209, 88, 0.15);
+  color: var(--green);
+}
+.badge-orange {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.badge-blue {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+.light .badge-blue {
+  color: #2563eb;
+}
+
+/* ── Privacy Blur ──────────────────────────────────────────── */
+.blur-privacy {
+  filter: blur(8px);
+  user-select: none;
+}
+.blur-privacy-sm {
+  filter: blur(6px);
+  user-select: none;
+}
+
+/* ── PIN Keypad ────────────────────────────────────────────── */
+.pin-btn {
+  width: 64px;
+  height: 48px;
+  border-radius: 8px;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.pin-btn:hover {
+  background: var(--glass-hover);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.light .pin-btn {
+  background: #f1f5f9;
+  border-color: transparent;
+}
+.light .pin-btn:hover {
+  background: #e2e8f0;
+  border-color: transparent;
+}
+.pin-btn:active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+/* ── Segmented Picker ──────────────────────────────────────── */
+.segmented {
+  display: inline-flex;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+.light .segmented {
+  background: #f1f5f9;
+  border-color: transparent;
+}
+.segmented-btn {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+.segmented-btn.active {
+  background: var(--glass-strong);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.light .segmented-btn.active {
+  background: white;
+  color: #1e293b;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Mapping Label Tooltip ─────────────────────────────────── */
+.mapping-label {
+  position: relative;
+  cursor: default;
+}
+.mapping-label:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 6px);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 400;
+  padding: 6px 10px;
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 50;
+  pointer-events: none;
+  animation: fadeInUp 0.15s ease-out;
+}
+.light .mapping-label:hover::after {
+  background: #1e293b;
+  color: #f1f5f9;
+  border-color: transparent;
+}
+.mapping-label:hover::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  bottom: calc(100% + 2px);
+  border: 4px solid transparent;
+  border-top-color: rgba(255, 255, 255, 0.1);
+  z-index: 50;
+  pointer-events: none;
+}
+.light .mapping-label:hover::before {
+  border-top-color: #1e293b;
+}
+
+/* ── Animations ────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInQuote {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeInUp 0.25s ease-out;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DARK MODE — Tailwind class overrides
+   These ONLY apply when NOT in .light mode, ensuring Tailwind
+   utility classes look correct on the dark glass background.
+   ══════════════════════════════════════════════════════════════ */
+
+/* Background overrides — make "white" backgrounds glass (dark only) */
+:root:not(.light) .bg-white {
+  background-color: var(--glass) !important;
+}
+:root:not(.light) .bg-gray-50 {
+  background-color: var(--bg) !important;
+}
+:root:not(.light) .bg-gray-100 {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+:root:not(.light) .bg-gray-200 {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Dark zinc backgrounds */
+:root:not(.light) .dark\:bg-zinc-900 {
+  background-color: var(--bg) !important;
+}
+:root:not(.light) .dark\:bg-zinc-800 {
+  background-color: var(--glass) !important;
+}
+
+/* Border colors (dark only) */
+:root:not(.light) .border-gray-200 {
+  border-color: var(--glass-border) !important;
+}
+:root:not(.light) .border-gray-100 {
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+:root:not(.light) .border-gray-300 {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Text colors (dark only) */
+:root:not(.light) .text-gray-800,
+:root:not(.light) .text-gray-900 {
+  color: var(--text) !important;
+}
+:root:not(.light) .text-gray-700 {
+  color: #d1d1d6 !important;
+}
+:root:not(.light) .text-gray-600 {
+  color: var(--text-secondary) !important;
+}
+:root:not(.light) .text-gray-500 {
+  color: var(--text-tertiary) !important;
+}
+:root:not(.light) .text-gray-400 {
+  color: var(--text-tertiary) !important;
+}
+
+/* Colored backgrounds (dark only) */
+:root:not(.light) .bg-orange-50 {
+  background-color: var(--accent-glow) !important;
+}
+:root:not(.light) .border-orange-200 {
+  border-color: rgba(249, 115, 22, 0.2) !important;
+}
+:root:not(.light) .bg-red-50 {
+  background-color: rgba(255, 69, 58, 0.08) !important;
+}
+:root:not(.light) .bg-green-50 {
+  background-color: rgba(48, 209, 88, 0.08) !important;
+}
+:root:not(.light) .bg-yellow-50 {
+  background-color: rgba(255, 214, 10, 0.08) !important;
+}
+:root:not(.light) .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.08) !important;
+}
+
+/* Toggle switches (dark only) */
+:root:not(.light) .dark\:bg-gray-700 {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Table/grid borders (dark only) */
+:root:not(.light) .divide-gray-200 > * + * {
+  border-color: var(--glass-border);
+}
+
+/* Modal / overlay backdrop */
+.bg-black\/50 {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(8px);
+}
+
+/* Shadow replacements — dark uses glow, light uses traditional shadow */
+:root:not(.light) .shadow-lg,
+:root:not(.light) .shadow-xl,
+:root:not(.light) .shadow-2xl {
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--glass-border) !important;
+}

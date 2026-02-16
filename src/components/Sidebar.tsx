@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useAppState } from "../lib/app-state";
 import { formatUSD } from "../lib/utils";
 import { timeAgo } from "../lib/utils";
+import logo from "../assets/icon-128.png";
 
 const navSections = [
   {
@@ -46,8 +47,9 @@ export function Sidebar() {
 
   return (
     <div className="sidebar w-56 flex flex-col h-full shrink-0">
-      {/* Title */}
-      <div className="px-4 pt-5 pb-3">
+      {/* Logo & Title */}
+      <div className="px-4 pt-5 pb-3 flex items-center gap-3">
+        <img src={logo} alt="Sovereign Tax" className="w-8 h-8 rounded-lg" />
         <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100">
           Sovereign Tax
         </h1>
