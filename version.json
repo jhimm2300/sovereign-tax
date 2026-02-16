@@ -1,8 +1,8 @@
 {
-  "latest": "1.2.1",
+  "latest": "1.2.2",
   "url": "https://sovereigntax.io",
-  "releaseDate": "2026-02-15",
-  "notes": "Security and cost-basis engine fixes: PIN key rotation, partial-sale pro-rating, Specific ID wallet enforcement, case-insensitive wallet matching",
+  "releaseDate": "2026-02-16",
+  "notes": "Glass theme redesign, Satoshi Nakamoto quotes, help guide, logo integration",
   "downloads": {
     "macos": "https://sovereigntax.io/downloads/SovereignTax-macOS.dmg",
     "windows": "https://sovereigntax.io/downloads/SovereignTax-Windows.exe",
