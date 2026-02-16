@@ -1,23 +1,36 @@
-Sovereign Tax — Source Available License
+Sovereign Tax — Source Available License (Proprietary)
 
 Copyright (c) 2026 Sovereign Tax Solutions LLC. All rights reserved.
+
+NOTICE: This software is proprietary. It is NOT open source. It is NOT
+free software. It is NOT licensed under MIT, GPL, Apache, BSD, or any
+other open source or permissive license. The availability of source code
+does NOT grant you any rights to use, copy, modify, distribute, sell, or
+create derivative works, except as explicitly stated below.
 
 TERMS AND CONDITIONS
 
 1. DEFINITIONS
 
    "Software" means the Sovereign Tax desktop application, including all
-   source code, object code, documentation, and associated files in this
-   repository.
+   source code, object code, documentation, algorithms, data structures,
+   user interface designs, and associated files in this repository.
 
    "Licensor" means Sovereign Tax Solutions LLC.
 
    "You" means the individual or entity accessing or using the Software.
 
-2. SOURCE AVAILABILITY
+   "Derivative Work" means any work that is based on, incorporates,
+   adapts, translates, modifies, extends, or is otherwise derived from
+   the Software or any portion thereof, including but not limited to
+   forks, clones, ports, rewrites inspired by the Software's code or
+   architecture, and any product that reuses the Software's algorithms,
+   data structures, user interface designs, or source code.
 
-   The source code of the Software is made publicly available for the
-   sole purposes of:
+2. SOURCE AVAILABILITY — LIMITED PURPOSE ONLY
+
+   The source code of the Software is made available SOLELY for the
+   following non-commercial, read-only purposes:
 
    (a) Security auditing — reviewing the code to verify the Software's
        privacy, encryption, and data handling claims.
@@ -28,103 +41,203 @@ TERMS AND CONDITIONS
    (c) Educational review — reading the code to understand its
        functionality for personal, non-commercial learning purposes.
 
-3. RESTRICTIONS
+   NO OTHER USE IS PERMITTED. Viewing the source code does not grant
+   you any license, right, or permission beyond what is stated above.
 
-   You may NOT, without a valid purchased license from the Licensor:
+3. ABSOLUTE PROHIBITIONS
 
-   (a) Use the Software for any production, commercial, or personal
-       tax calculation or tax reporting purpose.
+   The following actions are STRICTLY PROHIBITED without the prior
+   written consent of the Licensor. ANY violation constitutes copyright
+   infringement, breach of contract, and misappropriation of trade
+   secrets, and WILL be pursued to the fullest extent of the law:
 
-   (b) Distribute, sublicense, sell, resell, lease, rent, loan, or
-       otherwise transfer the Software or any copy thereof to any
-       third party.
+   (a) COMMERCIAL USE: You may NOT use the Software or any portion
+       thereof for any commercial purpose whatsoever, including but
+       not limited to selling, reselling, licensing, sublicensing,
+       leasing, renting, or otherwise monetizing the Software or any
+       Derivative Work.
 
-   (c) Modify, adapt, or create derivative works based on the Software
-       for any purpose other than those expressly permitted in Section 2.
+   (b) RESALE AND REDISTRIBUTION: You may NOT distribute, sell, resell,
+       sublicense, lease, rent, loan, publish, host, deploy, or
+       otherwise transfer the Software, any copy thereof, or any
+       Derivative Work to any third party, whether for compensation
+       or not.
 
-   (d) Remove, alter, or obscure any copyright notices, license terms,
+   (c) FORKING AND DERIVATIVE WORKS: You may NOT fork, clone, copy,
+       modify, adapt, translate, reverse engineer, decompile, or
+       create any Derivative Work based on the Software for ANY
+       purpose, including but not limited to building a competing
+       product, creating an alternative version, or incorporating
+       any portion into another product or service.
+
+   (d) COMPETING PRODUCTS: You may NOT use any portion of the Software's
+       source code, algorithms, architecture, data structures, user
+       interface designs, cost basis calculation logic, or any other
+       intellectual property to develop, assist in developing, or
+       inform the development of any competing product or service
+       in the fields of cryptocurrency tax, cryptocurrency accounting,
+       digital asset management, or financial reporting.
+
+   (e) BRANDING AND ATTRIBUTION REMOVAL: You may NOT remove, alter,
+       obscure, or modify any copyright notices, license terms,
        proprietary markings, or branding contained in the Software.
 
-   (e) Use the Software to provide tax calculation, tax preparation,
-       financial analysis, or any similar services to third parties,
-       whether or not for compensation.
+   (f) THIRD-PARTY SERVICES: You may NOT use the Software to provide
+       tax calculation, tax preparation, financial analysis, portfolio
+       management, or any similar services to third parties, whether
+       or not for compensation.
 
-   (f) Incorporate any portion of the Software into another product or
-       service, whether commercial or non-commercial.
+   (g) NETWORK DEPLOYMENT: You may NOT host, deploy, or make the
+       Software or any Derivative Work available over a network,
+       cloud service, SaaS platform, or API for access by third
+       parties.
 
-   (g) Host, deploy, or make the Software available over a network for
-       access by third parties.
+   (h) CIRCUMVENTION: You may NOT attempt to circumvent, disable,
+       or interfere with any license verification, security features,
+       encryption, or access controls in the Software.
 
-   (h) Use any portion of the Software's code, algorithms, data
-       structures, or architecture to develop a competing product
-       or service.
+   (i) CODE EXTRACTION: You may NOT extract, copy, or reuse individual
+       files, functions, modules, components, or code snippets from
+       the Software for use in any other project, product, or service.
 
-   (i) Attempt to circumvent, disable, or interfere with any license
-       verification, security features, or access controls in the
-       Software.
+4. FORKING EXPLICITLY PROHIBITED
 
-4. PURCHASE REQUIREMENT
+   Forking this repository is EXPRESSLY PROHIBITED. GitHub forks, manual
+   clones for the purpose of creating Derivative Works, mirrors, or any
+   other reproduction of this repository beyond temporary local copies
+   for the read-only purposes described in Section 2 are unauthorized
+   and constitute a violation of this license.
+
+   If you have forked this repository, you must DELETE your fork
+   immediately. Failure to do so constitutes ongoing copyright
+   infringement and a continuing violation of this license.
+
+5. PURCHASE REQUIREMENT
 
    To use the Software for its intended purpose (Bitcoin tax calculation
    and reporting), you must purchase a valid license from the Licensor
-   or its authorized resellers. Use of the Software without a valid
-   purchased license is a violation of this license and may constitute
-   copyright infringement under applicable law.
+   at sovereigntax.io or through its authorized payment processors.
+   Use of the Software without a valid purchased license is a violation
+   of this license and constitutes copyright infringement under
+   applicable law.
 
-5. NO OPEN SOURCE
+6. NO OPEN SOURCE
 
    This Software is NOT open source. The availability of source code
    does not grant you any rights beyond those explicitly stated in
    Section 2. This license is not compatible with and does not grant
    rights under any open source license, including but not limited to
-   the MIT License, GPL, Apache License, or BSD License.
+   the MIT License, GNU GPL, GNU LGPL, GNU AGPL, Apache License, BSD
+   License, Mozilla Public License, or any Creative Commons license.
 
-6. COMPETITOR RESTRICTION
+   Any representation that this Software is "open source" or "free
+   software" is false and unauthorized.
 
-   No employee, independent contractor, agent, or affiliate of any
-   competing provider of cryptocurrency tax, cryptocurrency accounting,
-   or digital asset management software is permitted to access, use,
-   review, or evaluate the Software or its source code without the
-   express written permission of the Licensor. By accessing this
-   repository, you represent and warrant that you are not acting on
-   behalf of a competitor.
+7. COMPETITOR RESTRICTION
 
-7. INTELLECTUAL PROPERTY
+   No employee, independent contractor, agent, consultant, or affiliate
+   of any competing provider of cryptocurrency tax software, cryptocurrency
+   accounting software, digital asset management software, or tax
+   preparation services is permitted to access, use, review, evaluate,
+   or analyze the Software or its source code without the express written
+   permission of the Licensor.
+
+   By accessing this repository, you represent and warrant that:
+   (a) You are not acting on behalf of a competitor;
+   (b) You will not share, disclose, or communicate any information
+       obtained from this source code to any competitor;
+   (c) You will not use any knowledge gained from reviewing this source
+       code to develop, enhance, or inform a competing product.
+
+8. INTELLECTUAL PROPERTY
 
    The Software, including all source code, algorithms, data structures,
-   user interface designs, documentation, and branding, is the exclusive
-   intellectual property of Sovereign Tax Solutions LLC and is protected
-   by copyright, trade secret, and other intellectual property laws.
-   All rights not expressly granted herein are reserved by the Licensor.
+   cost basis calculation engine, CSV import logic, user interface designs,
+   documentation, and branding, is the exclusive intellectual property of
+   Sovereign Tax Solutions LLC and is protected by United States copyright
+   law (17 U.S.C. et seq.), trade secret law, and international intellectual
+   property treaties. All rights not expressly granted herein are reserved
+   by the Licensor.
 
-8. NO WARRANTY
+9. ENFORCEMENT AND REMEDIES
 
-   THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND,
-   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, ACCURACY, AND
-   NON-INFRINGEMENT. THE LICENSOR DOES NOT WARRANT THAT THE SOFTWARE
-   WILL MEET YOUR REQUIREMENTS, OPERATE WITHOUT INTERRUPTION, OR BE
-   ERROR-FREE.
+   The Licensor actively monitors for unauthorized use, forks,
+   Derivative Works, and competing products based on this Software.
+   Any violation of this license will result in the Licensor pursuing
+   ALL available legal remedies, including but not limited to:
 
-9. LIMITATION OF LIABILITY
+   (a) INJUNCTIVE RELIEF: The Licensor will seek immediate injunctive
+       and equitable relief to stop unauthorized use, distribution, or
+       creation of Derivative Works. You acknowledge that monetary
+       damages alone would be insufficient to compensate the Licensor
+       and that injunctive relief is appropriate.
 
-   IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-   SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES ARISING OUT OF
-   OR RELATED TO THIS LICENSE OR THE SOFTWARE, REGARDLESS OF THE THEORY
-   OF LIABILITY. THE LICENSOR'S TOTAL AGGREGATE LIABILITY SHALL NOT
-   EXCEED THE AMOUNT YOU PAID FOR THE SOFTWARE.
+   (b) STATUTORY DAMAGES: The Licensor will pursue statutory damages
+       for copyright infringement under 17 U.S.C. Section 504, which
+       provides for damages of up to $150,000 per work infringed for
+       willful infringement.
 
-10. TERMINATION
+   (c) ACTUAL DAMAGES AND PROFITS: The Licensor will pursue recovery
+       of all actual damages suffered, plus any profits the infringer
+       earned from the unauthorized use.
+
+   (d) ATTORNEY'S FEES AND COSTS: The prevailing party in any legal
+       action arising from a violation of this license shall be entitled
+       to recover reasonable attorney's fees, court costs, and expenses
+       of litigation from the violating party.
+
+   (e) DMCA TAKEDOWNS: The Licensor will file DMCA takedown requests
+       with GitHub, hosting providers, app stores, and any other
+       platforms hosting unauthorized copies or Derivative Works.
+
+   (f) ADDITIONAL CLAIMS: The Licensor reserves the right to pursue
+       claims for breach of contract, misappropriation of trade
+       secrets, unfair competition, unjust enrichment, and any other
+       applicable legal theories.
+
+10. NO WARRANTY
+
+    THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND,
+    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, ACCURACY, AND
+    NON-INFRINGEMENT. THE LICENSOR DOES NOT WARRANT THAT THE SOFTWARE
+    WILL MEET YOUR REQUIREMENTS, OPERATE WITHOUT INTERRUPTION, OR BE
+    ERROR-FREE.
+
+11. LIMITATION OF LIABILITY
+
+    IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
+    SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES ARISING OUT OF
+    OR RELATED TO THIS LICENSE OR THE SOFTWARE, REGARDLESS OF THE THEORY
+    OF LIABILITY. THE LICENSOR'S TOTAL AGGREGATE LIABILITY SHALL NOT
+    EXCEED THE AMOUNT YOU PAID FOR THE SOFTWARE.
+
+12. TERMINATION
 
     Your rights under this license terminate automatically and immediately
     if you violate any of its terms. Upon termination, you must destroy
-    all copies of the Software in your possession. Sections 3, 5, 6, 7,
-    8, 9, and 11 survive termination.
+    all copies of the Software in your possession, including any forks,
+    clones, or Derivative Works. Sections 3, 4, 6, 7, 8, 9, 10, 11,
+    and 13 survive termination.
 
-11. GOVERNING LAW
+13. GOVERNING LAW AND JURISDICTION
 
     This license shall be governed by and construed in accordance with
     the laws of the State of Wyoming, United States, without regard to
-    its conflict of law provisions.
+    its conflict of law provisions. Any legal action arising from this
+    license shall be brought exclusively in the state or federal courts
+    located in the State of Wyoming, and you consent to the personal
+    jurisdiction of such courts.
 
-For licensing inquiries, contact us at the email provided on our website.
+14. SEVERABILITY
+
+    If any provision of this license is held to be unenforceable, the
+    remaining provisions shall remain in full force and effect.
+
+15. ENTIRE AGREEMENT
+
+    This license constitutes the entire agreement between you and the
+    Licensor regarding the Software and supersedes all prior agreements
+    and understandings, whether written or oral.
+
+For licensing inquiries, contact: support@sovereigntax.io
