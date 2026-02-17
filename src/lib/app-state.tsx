@@ -8,7 +8,7 @@ import * as persistence from "./persistence";
 import { computeHash } from "./csv-import";
 import { deriveEncryptionKey, generateSalt, hashPINWithPBKDF2 } from "./crypto";
 import { AuditEntry, AuditAction, createAuditEntry } from "./audit";
-import { createBackupBundle, parseBackupBundle, downloadBackup, BackupBundle } from "./backup";
+import { createBackupBundle, parseBackupBundle, downloadBackup } from "./backup";
 
 interface PriceState {
   currentPrice: number | null;
@@ -69,11 +69,11 @@ interface AppStateContextType {
   checkImportHistory: (hash: string) => ImportRecord | undefined;
   recordImport: (hash: string, fileName: string, count: number) => Promise<void>;
   saveMappings: (mappings: Record<string, ColumnMapping>) => Promise<void>;
-  loadMappings: () => Record<string, ColumnMapping>;
+  loadMappings: () => Promise<Record<string, ColumnMapping>>;
 
   // Backup
-  createBackup: () => Promise<void>;
-  restoreBackup: (file: File) => Promise<void>;
+  createBackup: (password: string) => Promise<void>;
+  restoreBackup: (file: File, password?: string) => Promise<void>;
 
   // Audit
   appendAuditLog: (action: AuditAction, details: string) => Promise<void>;
@@ -402,12 +402,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     await persistence.saveMappings(mappings);
   }, []);
 
-  const loadMappingsAction = useCallback(() => {
-    return persistence.loadMappings();
+  const loadMappingsAction = useCallback(async () => {
+    return persistence.loadMappingsAsync();
   }, []);
 
   // Backup & Restore
-  const createBackupAction = useCallback(async () => {
+  const createBackupAction = useCallback(async (password: string) => {
     const data = await persistence.loadAllDataForBackup();
     const bundle = await createBackupBundle(
       data.transactions,
@@ -415,26 +415,39 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       data.mappings,
       data.importHistory,
       data.auditLog,
-      data.preferences
+      data.preferences,
+      password
     );
     downloadBackup(bundle);
-    await appendAuditLog(AuditAction.BackupCreated, `Backup created with ${data.transactions.length} transactions`);
+    await appendAuditLog(AuditAction.BackupCreated, `Encrypted backup created with ${data.transactions.length} transactions`);
   }, [appendAuditLog]);
 
-  const restoreBackupAction = useCallback(async (file: File) => {
+  const restoreBackupAction = useCallback(async (file: File, password?: string) => {
     const text = await file.text();
-    const bundle = await parseBackupBundle(text);
+    const result = await parseBackupBundle(text, password);
 
     // Restore all data
-    await persistence.restoreAllData(bundle.data);
+    await persistence.restoreAllData(result.data);
 
     // Reload state
-    setTransactions(bundle.data.transactions);
-    setRecordedSales(bundle.data.recordedSales);
-    setImportHistory(bundle.data.importHistory);
-    setAuditLog(bundle.data.auditLog);
+    setTransactions(result.data.transactions);
+    setRecordedSales(result.data.recordedSales);
+    setImportHistory(result.data.importHistory);
+    setAuditLog(result.data.auditLog);
 
-    await appendAuditLog(AuditAction.BackupRestored, `Backup restored from ${file.name} (${bundle.data.transactions.length} transactions)`);
+    // Reload preferences into UI state so restored settings take effect immediately
+    if (result.data.preferences) {
+      const p = result.data.preferences;
+      if (p.selectedYear != null) setSelectedYear(p.selectedYear);
+      if (p.selectedMethod != null) setSelectedMethod(p.selectedMethod);
+      if (p.appearanceMode !== undefined) setAppearanceMode(p.appearanceMode ?? null);
+      if (p.privacyBlur !== undefined) setPrivacyBlur(p.privacyBlur ?? false);
+      if (p.selectedWallet !== undefined) setSelectedWallet(p.selectedWallet ?? null);
+      if (p.livePriceEnabled !== undefined) setLivePriceEnabled(p.livePriceEnabled ?? true);
+    }
+
+    const encLabel = result.wasEncrypted ? "encrypted" : "legacy unencrypted";
+    await appendAuditLog(AuditAction.BackupRestored, `Backup restored from ${file.name} (${encLabel}, ${result.data.transactions.length} transactions)`);
   }, [appendAuditLog]);
 
   const value: AppStateContextType = {

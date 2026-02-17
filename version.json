@@ -1,8 +1,8 @@
 {
-  "latest": "1.2.45",
+  "latest": "1.2.47",
   "url": "https://sovereigntax.io",
-  "releaseDate": "2026-02-17",
-  "notes": "Fix encryption stack overflow on large datasets — transactions now persist reliably",
+  "releaseDate": "2026-02-16",
+  "notes": "Encrypted backups, semver update check, IRS leap-year fix, async loadMappings, preferences restore, useMemo optimization",
   "downloads": {
     "macos": "https://sovereigntax.io/downloads/SovereignTax-macOS.dmg",
     "windows": "https://sovereigntax.io/downloads/SovereignTax-Windows.exe",

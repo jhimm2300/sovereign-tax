@@ -3,9 +3,23 @@ import { useAppState } from "../lib/app-state";
 import { SetupPIN } from "./SetupPIN";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { HelpPanel } from "./HelpPanel";
+import { isEncryptedBackup } from "../lib/backup";
 
 const APP_VERSION = __APP_VERSION__;
 const VERSION_CHECK_URL = "https://raw.githubusercontent.com/sovereigntax/sovereign-tax/main/version.json";
+
+/** Compare two semver strings. Returns -1 if a < b, 0 if equal, 1 if a > b. */
+function compareSemver(a: string, b: string): number {
+  const pa = a.split(".").map(Number);
+  const pb = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const na = pa[i] ?? 0;
+    const nb = pb[i] ?? 0;
+    if (na < nb) return -1;
+    if (na > nb) return 1;
+  }
+  return 0;
+}
 
 export function SettingsView() {
   const state = useAppState();
@@ -15,8 +29,20 @@ export function SettingsView() {
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null);
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingFileIsEncrypted, setPendingFileIsEncrypted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [updateStatus, setUpdateStatus] = useState<{ type: "checking" | "up-to-date" | "available" | "error"; message: string; downloadUrl?: string } | null>(null);
+
+  // Backup password modal state
+  const [showBackupPasswordModal, setShowBackupPasswordModal] = useState(false);
+  const [backupPassword, setBackupPassword] = useState("");
+  const [backupPasswordConfirm, setBackupPasswordConfirm] = useState("");
+  const [backupPasswordError, setBackupPasswordError] = useState<string | null>(null);
+
+  // Restore password modal state
+  const [showRestorePasswordModal, setShowRestorePasswordModal] = useState(false);
+  const [restorePassword, setRestorePassword] = useState("");
+  const [restorePasswordError, setRestorePasswordError] = useState<string | null>(null);
 
   if (showChangePIN) {
     return <SetupPIN isInitialSetup={false} onDone={() => setShowChangePIN(false)} />;
@@ -131,15 +157,11 @@ export function SettingsView() {
         <div className="flex items-center gap-3 mb-3">
           <button
             className="btn-secondary text-sm"
-            onClick={async () => {
-              try {
-                setBackupStatus("Creating backup...");
-                await state.createBackup();
-                setBackupStatus("Backup downloaded successfully!");
-                setTimeout(() => setBackupStatus(null), 3000);
-              } catch (e: any) {
-                setBackupStatus(`Error: ${e.message}`);
-              }
+            onClick={() => {
+              setBackupPassword("");
+              setBackupPasswordConfirm("");
+              setBackupPasswordError(null);
+              setShowBackupPasswordModal(true);
             }}
           >
             💾 Create Backup
@@ -155,45 +177,225 @@ export function SettingsView() {
             type="file"
             accept=".sovereigntax"
             className="hidden"
-            onChange={(e) => {
+            onChange={async (e) => {
               const file = e.target.files?.[0];
               if (file) {
-                setPendingFile(file);
-                setShowRestoreConfirm(true);
+                // Read file to check if it's v2 encrypted or v1 legacy
+                try {
+                  const text = await file.text();
+                  const encrypted = isEncryptedBackup(text);
+                  setPendingFile(file);
+                  setPendingFileIsEncrypted(encrypted);
+                  if (encrypted) {
+                    // Show password prompt for encrypted backup
+                    setRestorePassword("");
+                    setRestorePasswordError(null);
+                    setShowRestorePasswordModal(true);
+                  } else {
+                    // Legacy unencrypted backup — show confirmation with warning
+                    setShowRestoreConfirm(true);
+                  }
+                } catch {
+                  setRestoreStatus("Error: Could not read backup file");
+                }
               }
               e.target.value = "";
             }}
           />
         </div>
-        {showRestoreConfirm && pendingFile && (
-          <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg flex items-center gap-3 mb-2">
-            <span className="text-sm text-orange-600">Restore from {pendingFile.name}? This will overwrite all current data.</span>
-            <button
-              className="btn-danger text-sm"
-              onClick={async () => {
-                try {
-                  setRestoreStatus("Restoring...");
-                  await state.restoreBackup(pendingFile);
-                  setRestoreStatus("Backup restored successfully!");
-                  setShowRestoreConfirm(false);
-                  setPendingFile(null);
-                  setTimeout(() => setRestoreStatus(null), 3000);
-                } catch (e: any) {
-                  setRestoreStatus(`Error: ${e.message}`);
-                }
-              }}
-            >
-              Confirm Restore
-            </button>
-            <button className="btn-secondary text-sm" onClick={() => { setShowRestoreConfirm(false); setPendingFile(null); }}>
-              Cancel
-            </button>
+
+        {/* Create Backup Password Modal */}
+        {showBackupPasswordModal && (
+          <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 p-4 rounded-lg mb-3">
+            <h4 className="font-semibold text-sm mb-1">Set Backup Password</h4>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              Your backup will be encrypted with AES-256-GCM using this password.
+              <strong className="text-orange-600 dark:text-orange-400"> You will need this password to restore this backup. </strong>
+              If you lose it, the backup cannot be recovered.
+            </p>
+            <div className="space-y-2 mb-3">
+              <input
+                type="password"
+                placeholder="Enter backup password"
+                className="input w-full text-sm"
+                value={backupPassword}
+                onChange={(e) => { setBackupPassword(e.target.value); setBackupPasswordError(null); }}
+                autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter") document.getElementById("backup-confirm-input")?.focus(); }}
+              />
+              <input
+                id="backup-confirm-input"
+                type="password"
+                placeholder="Confirm backup password"
+                className="input w-full text-sm"
+                value={backupPasswordConfirm}
+                onChange={(e) => { setBackupPasswordConfirm(e.target.value); setBackupPasswordError(null); }}
+                onKeyDown={async (e) => {
+                  if (e.key === "Enter" && backupPassword && backupPassword === backupPasswordConfirm) {
+                    try {
+                      setShowBackupPasswordModal(false);
+                      setBackupStatus("Encrypting and creating backup...");
+                      await state.createBackup(backupPassword);
+                      setBackupStatus("Encrypted backup downloaded successfully!");
+                      setBackupPassword("");
+                      setBackupPasswordConfirm("");
+                      setTimeout(() => setBackupStatus(null), 3000);
+                    } catch (err: any) {
+                      setBackupStatus(`Error: ${err.message}`);
+                    }
+                  }
+                }}
+              />
+            </div>
+            {backupPasswordError && <p className="text-xs text-red-500 mb-2">{backupPasswordError}</p>}
+            <div className="flex items-center gap-2">
+              <button
+                className="btn-primary text-sm"
+                disabled={!backupPassword || backupPassword.length < 1}
+                onClick={async () => {
+                  if (backupPassword !== backupPasswordConfirm) {
+                    setBackupPasswordError("Passwords do not match");
+                    return;
+                  }
+                  if (backupPassword.length < 4) {
+                    setBackupPasswordError("Password must be at least 4 characters");
+                    return;
+                  }
+                  try {
+                    setShowBackupPasswordModal(false);
+                    setBackupStatus("Encrypting and creating backup...");
+                    await state.createBackup(backupPassword);
+                    setBackupStatus("Encrypted backup downloaded successfully!");
+                    setBackupPassword("");
+                    setBackupPasswordConfirm("");
+                    setTimeout(() => setBackupStatus(null), 3000);
+                  } catch (err: any) {
+                    setBackupStatus(`Error: ${err.message}`);
+                  }
+                }}
+              >
+                Create Encrypted Backup
+              </button>
+              <button
+                className="btn-secondary text-sm"
+                onClick={() => { setShowBackupPasswordModal(false); setBackupPassword(""); setBackupPasswordConfirm(""); }}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
-        {backupStatus && <p className="text-sm text-gray-500">{backupStatus}</p>}
-        {restoreStatus && <p className="text-sm text-gray-500">{restoreStatus}</p>}
+
+        {/* Restore Password Modal (for v2 encrypted backups) */}
+        {showRestorePasswordModal && pendingFile && (
+          <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 p-4 rounded-lg mb-3">
+            <h4 className="font-semibold text-sm mb-1">Enter Backup Password</h4>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              <strong>{pendingFile.name}</strong> is encrypted. Enter the password that was used when this backup was created.
+            </p>
+            <p className="text-xs text-orange-600 dark:text-orange-400 mb-3">
+              This will overwrite all current data in the app.
+            </p>
+            <input
+              type="password"
+              placeholder="Backup password"
+              className="input w-full text-sm mb-2"
+              value={restorePassword}
+              onChange={(e) => { setRestorePassword(e.target.value); setRestorePasswordError(null); }}
+              autoFocus
+              onKeyDown={async (e) => {
+                if (e.key === "Enter" && restorePassword) {
+                  try {
+                    setShowRestorePasswordModal(false);
+                    setRestoreStatus("Decrypting and restoring...");
+                    await state.restoreBackup(pendingFile, restorePassword);
+                    setRestoreStatus("Encrypted backup restored successfully!");
+                    setPendingFile(null);
+                    setRestorePassword("");
+                    setTimeout(() => setRestoreStatus(null), 3000);
+                  } catch (err: any) {
+                    setRestorePasswordError(err.message);
+                    setShowRestorePasswordModal(true);
+                    setRestoreStatus(null);
+                  }
+                }
+              }}
+            />
+            {restorePasswordError && <p className="text-xs text-red-500 mb-2">{restorePasswordError}</p>}
+            <div className="flex items-center gap-2">
+              <button
+                className="btn-primary text-sm"
+                disabled={!restorePassword}
+                onClick={async () => {
+                  try {
+                    setShowRestorePasswordModal(false);
+                    setRestoreStatus("Decrypting and restoring...");
+                    await state.restoreBackup(pendingFile, restorePassword);
+                    setRestoreStatus("Encrypted backup restored successfully!");
+                    setPendingFile(null);
+                    setRestorePassword("");
+                    setTimeout(() => setRestoreStatus(null), 3000);
+                  } catch (err: any) {
+                    setRestorePasswordError(err.message);
+                    setShowRestorePasswordModal(true);
+                    setRestoreStatus(null);
+                  }
+                }}
+              >
+                Decrypt & Restore
+              </button>
+              <button
+                className="btn-secondary text-sm"
+                onClick={() => { setShowRestorePasswordModal(false); setPendingFile(null); setRestorePassword(""); }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Legacy restore confirm (v1 unencrypted backups) */}
+        {showRestoreConfirm && pendingFile && !pendingFileIsEncrypted && (
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-lg mb-3">
+            <div className="flex items-start gap-2 mb-2">
+              <span className="text-lg">⚠️</span>
+              <div>
+                <h4 className="font-semibold text-sm">Legacy Unencrypted Backup</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <strong>{pendingFile.name}</strong> is an older backup that was not encrypted. Restoring it will overwrite all current data.
+                  After restoring, we recommend creating a new encrypted backup.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                className="btn-danger text-sm"
+                onClick={async () => {
+                  try {
+                    setShowRestoreConfirm(false);
+                    setRestoreStatus("Restoring legacy backup...");
+                    await state.restoreBackup(pendingFile);
+                    setRestoreStatus("Legacy backup restored successfully! Consider creating a new encrypted backup.");
+                    setPendingFile(null);
+                    setTimeout(() => setRestoreStatus(null), 5000);
+                  } catch (err: any) {
+                    setRestoreStatus(`Error: ${err.message}`);
+                  }
+                }}
+              >
+                Restore Anyway
+              </button>
+              <button className="btn-secondary text-sm" onClick={() => { setShowRestoreConfirm(false); setPendingFile(null); }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {backupStatus && <p className="text-sm text-gray-500 mt-2">{backupStatus}</p>}
+        {restoreStatus && <p className="text-sm text-gray-500 mt-2">{restoreStatus}</p>}
         <p className="text-xs text-gray-400 mt-2">
-          Backups include all transactions, sales, mappings, and audit log. Files use the .sovereigntax extension.
+          Backups are encrypted with AES-256-GCM using a password you choose. Files use the .sovereigntax extension.
         </p>
       </div>
 
@@ -223,7 +425,7 @@ export function SettingsView() {
                   const latest = data.latest;
                   if (!latest) throw new Error("Invalid response");
 
-                  if (latest === APP_VERSION) {
+                  if (compareSemver(latest, APP_VERSION) <= 0) {
                     setUpdateStatus({ type: "up-to-date", message: `You're up to date! (v${APP_VERSION})` });
                   } else {
                     const notes = data.notes ? ` — ${data.notes}` : "";

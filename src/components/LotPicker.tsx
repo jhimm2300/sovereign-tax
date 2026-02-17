@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Lot } from "../lib/models";
 import { formatUSD, formatBTC, formatDate } from "../lib/utils";
-import { daysBetween } from "../lib/cost-basis";
+import { daysBetween, isMoreThanOneYear } from "../lib/cost-basis";
 
 export interface LotSelection {
   lotId: string;
@@ -90,7 +90,7 @@ export function LotPicker({ lots, targetAmount, onConfirm, onCancel }: LotPicker
         .map((lot) => {
           const isSelected = !!selections[lot.id];
           const daysHeld = daysBetween(lot.purchaseDate, now);
-          const isLongTerm = daysHeld > 365;
+          const isLongTerm = isMoreThanOneYear(lot.purchaseDate, now);
           return (
             <div key={lot.id} className={`grid grid-cols-[40px_1fr_1fr_1fr_1fr_1fr_120px] gap-2 py-2 text-sm border-b border-gray-100 dark:border-gray-800 ${isSelected ? "bg-blue-50 dark:bg-blue-900/10" : ""}`}>
               <div>

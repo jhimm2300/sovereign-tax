@@ -111,7 +111,7 @@ export function ImportView() {
 
     // Save mapping
     if (exchange !== "Unknown") {
-      const mappings = state.loadMappings();
+      const mappings = await state.loadMappings();
       mappings[exchange] = finalMapping;
       await state.saveMappings(mappings);
     }

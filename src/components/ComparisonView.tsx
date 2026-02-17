@@ -13,11 +13,12 @@ interface MethodResult {
   salesCount: number;
 }
 
+// Exclude SpecificID from auto-comparison (requires manual lot selection)
+// Module-level constant so useMemo dependency is stable across renders
+const comparableMethods = Object.values(AccountingMethod).filter((m) => m !== AccountingMethod.SpecificID);
+
 export function ComparisonView() {
   const { allTransactions, selectedYear, setSelectedYear, availableYears, setSelectedNav } = useAppState();
-
-  // Exclude SpecificID from auto-comparison (requires manual lot selection)
-  const comparableMethods = Object.values(AccountingMethod).filter((m) => m !== AccountingMethod.SpecificID);
 
   const results: MethodResult[] = useMemo(() => {
     return comparableMethods.map((method) => {
@@ -31,7 +32,7 @@ export function ComparisonView() {
         salesCount: salesForYear.length,
       };
     });
-  }, [allTransactions, selectedYear, comparableMethods]);
+  }, [allTransactions, selectedYear]);
 
   const bestMethod = results.reduce((best, r) => (r.totalGL < best.totalGL ? r : best), results[0]);
 
