@@ -312,7 +312,8 @@ function EditModal({ txn, onSave, onClose }: { txn: Transaction; onSave: (update
           {/* Notes */}
           <div className="flex items-center gap-3">
             <span className="w-20 text-right text-gray-500 text-sm">Notes:</span>
-            <input className="input w-64 text-sm" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <input className="input w-64 text-sm" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={100} />
+            <span className="text-xs text-gray-400">{notes.length}/100</span>
           </div>
         </div>
 

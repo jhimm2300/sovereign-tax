@@ -1,11 +1,23 @@
 import { Transaction } from "./models";
 import { TransactionType } from "./types";
 
+/** Confidence level for auto-matched transfer pairs */
+export enum MatchConfidence {
+  /** Fee below auto-threshold — high confidence this is the same transfer */
+  Confident = "confident",
+  /** Fee between auto-threshold and ceiling — likely the same transfer but fee is unusually high */
+  Flagged = "flagged",
+}
+
 export interface TransferPair {
   transferOut: Transaction;
   transferIn: Transaction;
   amountBTC: number;
   daysBetween: number;
+  /** Implied miner fee: out.amountBTC - in.amountBTC (always >= 0 for valid matches) */
+  impliedFeeBTC: number;
+  /** Match confidence based on implied fee size */
+  confidence: MatchConfidence;
 }
 
 export interface ExchangeBalance {
@@ -23,10 +35,18 @@ export interface ReconciliationResult {
   suggestedMissing: string[];
 }
 
-const BTC_TOLERANCE = 0.00000001;
+/**
+ * Fee thresholds for transfer matching:
+ * - Below FEE_AUTO_THRESHOLD: auto-match with high confidence (green)
+ * - Between FEE_AUTO_THRESHOLD and FEE_MAX_CEILING: auto-match but flagged for review (orange)
+ * - Above FEE_MAX_CEILING: no auto-match (stays in unmatched list)
+ */
+const FEE_AUTO_THRESHOLD = 0.0005; // ~$50 at $100k/BTC — normal miner fee range
+const FEE_MAX_CEILING = 0.01;      // ~$1000 at $100k/BTC — above this is likely not the same transfer
+const NEGATIVE_FEE_TOLERANCE = 0.00000001; // 1 sat — allow for rounding in "in > out" edge cases
 const MAX_DAYS_WINDOW = 7;
 
-function daysBetweenDates(d1: string, d2: string): number {
+export function daysBetweenDates(d1: string, d2: string): number {
   const date1 = new Date(d1);
   const date2 = new Date(d2);
   return Math.abs(Math.floor((date2.getTime() - date1.getTime()) / (1000 * 60 * 60 * 24)));
@@ -44,19 +64,27 @@ export function reconcileTransfers(transactions: Transaction[]): ReconciliationR
   const usedOuts = new Set<string>();
   const usedIns = new Set<string>();
 
-  // Try to match transfers by amount and date window
+  // Try to match transfers by amount (with fee tolerance) and date window
   for (const out of transferOuts) {
     if (usedOuts.has(out.id)) continue;
 
     let bestMatch: Transaction | null = null;
+    let bestFee = Infinity;
     let bestDays = Infinity;
 
     for (const inp of transferIns) {
       if (usedIns.has(inp.id)) continue;
       if (inp.exchange === out.exchange) continue; // Same exchange transfers aren't cross-exchange
 
-      const amountDiff = Math.abs(out.amountBTC - inp.amountBTC);
-      if (amountDiff > BTC_TOLERANCE) continue;
+      // Implied fee: amount sent minus amount received
+      // Should be >= 0 (miner fee reduces the received amount)
+      const impliedFee = out.amountBTC - inp.amountBTC;
+
+      // Reject if "in" is more than "out" (beyond rounding tolerance)
+      if (impliedFee < -NEGATIVE_FEE_TOLERANCE) continue;
+
+      // Reject if implied fee exceeds ceiling
+      if (impliedFee > FEE_MAX_CEILING) continue;
 
       const days = daysBetweenDates(out.date, inp.date);
       if (days > MAX_DAYS_WINDOW) continue;
@@ -64,13 +92,21 @@ export function reconcileTransfers(transactions: Transaction[]): ReconciliationR
       // Transfer in should be after transfer out
       if (new Date(inp.date) < new Date(out.date)) continue;
 
-      if (days < bestDays) {
+      // Best-fit: prefer smallest implied fee, then smallest days
+      const fee = Math.max(0, impliedFee);
+      if (fee < bestFee || (fee === bestFee && days < bestDays)) {
+        bestFee = fee;
         bestDays = days;
         bestMatch = inp;
       }
     }
 
     if (bestMatch) {
+      const impliedFee = Math.max(0, out.amountBTC - bestMatch.amountBTC);
+      const confidence = impliedFee < FEE_AUTO_THRESHOLD
+        ? MatchConfidence.Confident
+        : MatchConfidence.Flagged;
+
       usedOuts.add(out.id);
       usedIns.add(bestMatch.id);
       matchedTransfers.push({
@@ -78,6 +114,8 @@ export function reconcileTransfers(transactions: Transaction[]): ReconciliationR
         transferIn: bestMatch,
         amountBTC: out.amountBTC,
         daysBetween: bestDays,
+        impliedFeeBTC: impliedFee,
+        confidence,
       });
     }
   }
@@ -105,7 +143,7 @@ export function reconcileTransfers(transactions: Transaction[]): ReconciliationR
   // Suggest missing imports
   const suggestedMissing: string[] = [];
   for (const b of Object.values(balances)) {
-    if (b.netBalance < -BTC_TOLERANCE) {
+    if (b.netBalance < -NEGATIVE_FEE_TOLERANCE) {
       suggestedMissing.push(
         `${b.exchange}: Balance is negative (${b.netBalance.toFixed(8)} BTC). You may be missing buy/transfer-in transactions.`
       );

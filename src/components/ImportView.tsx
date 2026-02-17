@@ -396,6 +396,7 @@ function DataPreview({ content, headers, mapping }: {
     { label: "Price", key: "price", isUSD: true },
     { label: "Total", key: "total", isUSD: true },
     { label: "Fee", key: "fee", isUSD: true },
+    { label: "Notes", key: "notes", isUSD: false },
   ];
 
   const activeCols = previewCols.filter((c) => mapping[c.key]);

@@ -199,7 +199,8 @@ export function AddTransactionView() {
         {/* Notes */}
         <div className="flex items-center gap-4">
           <span className="w-24 text-right text-gray-500">Notes:</span>
-          <input className="input w-72" placeholder="Optional notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <input className="input w-72" placeholder="Optional notes" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={100} />
+          <span className="text-xs text-gray-400">{notes.length}/100</span>
         </div>
 
         <div className="pt-2">

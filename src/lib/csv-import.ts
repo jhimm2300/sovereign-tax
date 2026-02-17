@@ -448,7 +448,7 @@ function parseDualColumnTransaction(
 
   if (amountBTC <= 0) throw new Error("BTC amount is zero");
 
-  const notes = mapping.notes && row[mapping.notes] ? row[mapping.notes] : "";
+  const notes = mapping.notes && row[mapping.notes] ? row[mapping.notes].slice(0, 100) : "";
   let finalExchange = exchange;
   if (mapping.exchange && row[mapping.exchange]?.trim()) {
     finalExchange = row[mapping.exchange];
@@ -538,7 +538,7 @@ function parseStandardTransaction(
     }
   }
 
-  const notes = mapping.notes && row[mapping.notes] ? row[mapping.notes] : "";
+  const notes = mapping.notes && row[mapping.notes] ? row[mapping.notes].slice(0, 100) : "";
   let finalExchange = exchange;
   if (mapping.exchange && row[mapping.exchange]?.trim()) {
     finalExchange = row[mapping.exchange];
