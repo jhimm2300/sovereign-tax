@@ -1,8 +1,8 @@
 {
-  "latest": "1.2.4",
+  "latest": "1.2.45",
   "url": "https://sovereigntax.io",
   "releaseDate": "2026-02-17",
-  "notes": "Fix audit log persistence, fix all fire-and-forget async calls in UI handlers",
+  "notes": "Fix encryption stack overflow on large datasets — transactions now persist reliably",
   "downloads": {
     "macos": "https://sovereigntax.io/downloads/SovereignTax-macOS.dmg",
     "windows": "https://sovereigntax.io/downloads/SovereignTax-Windows.exe",

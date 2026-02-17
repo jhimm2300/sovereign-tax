@@ -166,8 +166,14 @@ export async function encryptData(
   combined.set(iv, 1);
   combined.set(new Uint8Array(ciphertext), 1 + IV_LENGTH);
 
-  // Base64 encode
-  return btoa(String.fromCharCode(...combined));
+  // Base64 encode — chunked to avoid call stack overflow on large arrays
+  // (String.fromCharCode(...hugeArray) exceeds JS max argument limit ~65k)
+  let binaryString = "";
+  const CHUNK = 8192;
+  for (let i = 0; i < combined.length; i += CHUNK) {
+    binaryString += String.fromCharCode(...combined.subarray(i, i + CHUNK));
+  }
+  return btoa(binaryString);
 }
 
 /**
