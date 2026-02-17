@@ -64,7 +64,7 @@ export function RecordSaleView() {
     setShowLotPicker(false);
   };
 
-  const commitSale = () => {
+  const commitSale = async () => {
     if (!preview) return;
     const walletName = selectedWallet || "Recorded Sale";
     const txn = createTransaction({
@@ -77,8 +77,8 @@ export function RecordSaleView() {
       wallet: walletName,
       notes: "Manually recorded sale",
     });
-    state.addTransaction(txn);
-    state.recordSale(preview);
+    await state.addTransaction(txn);
+    await state.recordSale(preview);
     setSuccess("Sale recorded successfully");
     setPreview(null);
     setLotSelections(null);

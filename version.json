@@ -1,8 +1,8 @@
 {
-  "latest": "1.2.2",
+  "latest": "1.2.3",
   "url": "https://sovereigntax.io",
   "releaseDate": "2026-02-16",
-  "notes": "Glass theme redesign, Satoshi Nakamoto quotes, help guide, logo integration",
+  "notes": "Fix data persistence bug, fix version display, auto-inject version from package.json",
   "downloads": {
     "macos": "https://sovereigntax.io/downloads/SovereignTax-macOS.dmg",
     "windows": "https://sovereigntax.io/downloads/SovereignTax-Windows.exe",

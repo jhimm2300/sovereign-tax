@@ -51,9 +51,9 @@ export function TransactionsView() {
     else { setSortField(field); setSortAsc(true); }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deletingTxn) {
-      deleteTransaction(deletingTxn.id);
+      await deleteTransaction(deletingTxn.id);
       setDeletingTxn(null);
     }
   };
@@ -147,8 +147,8 @@ export function TransactionsView() {
       {editingTxn && (
         <EditModal
           txn={editingTxn}
-          onSave={(updates) => {
-            updateTransaction(editingTxn.id, updates);
+          onSave={async (updates) => {
+            await updateTransaction(editingTxn.id, updates);
             setEditingTxn(null);
           }}
           onClose={() => setEditingTxn(null)}
@@ -177,7 +177,7 @@ export function TransactionsView() {
   );
 }
 
-function EditModal({ txn, onSave, onClose }: { txn: Transaction; onSave: (updates: Partial<Omit<Transaction, "id">>) => void; onClose: () => void }) {
+function EditModal({ txn, onSave, onClose }: { txn: Transaction; onSave: (updates: Partial<Omit<Transaction, "id">>) => Promise<void>; onClose: () => void }) {
   const [type, setType] = useState(txn.transactionType);
   const [date, setDate] = useState(new Date(txn.date).toISOString().split("T")[0]);
   const [amountStr, setAmountStr] = useState(txn.amountBTC.toFixed(8));

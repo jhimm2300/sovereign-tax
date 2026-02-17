@@ -151,10 +151,10 @@ export function loadTransactions(): Transaction[] {
   return loadJSON<Transaction[]>(KEYS.transactions) ?? [];
 }
 
-export function saveTransactions(transactions: Transaction[]): void {
-  // Fire-and-forget async save if encryption key is available
+/** Save transactions — awaits encryption to ensure data is written before returning */
+export async function saveTransactions(transactions: Transaction[]): Promise<void> {
   if (_encryptionKey) {
-    saveEncrypted(KEYS.transactions, transactions);
+    await saveEncrypted(KEYS.transactions, transactions);
   } else {
     saveJSON(KEYS.transactions, transactions);
   }
@@ -173,9 +173,10 @@ export function loadRecordedSales(): SaleRecord[] {
   return loadJSON<SaleRecord[]>(KEYS.recordedSales) ?? [];
 }
 
-export function saveRecordedSales(sales: SaleRecord[]): void {
+/** Save recorded sales — awaits encryption to ensure data is written before returning */
+export async function saveRecordedSales(sales: SaleRecord[]): Promise<void> {
   if (_encryptionKey) {
-    saveEncrypted(KEYS.recordedSales, sales);
+    await saveEncrypted(KEYS.recordedSales, sales);
   } else {
     saveJSON(KEYS.recordedSales, sales);
   }
@@ -190,9 +191,10 @@ export async function loadMappingsAsync(): Promise<Record<string, ColumnMapping>
   return (await loadEncrypted<Record<string, ColumnMapping>>(KEYS.exchangeMappings)) ?? {};
 }
 
-export function saveMappings(mappings: Record<string, ColumnMapping>): void {
+/** Save mappings — awaits encryption to ensure data is written before returning */
+export async function saveMappings(mappings: Record<string, ColumnMapping>): Promise<void> {
   if (_encryptionKey) {
-    saveEncrypted(KEYS.exchangeMappings, mappings);
+    await saveEncrypted(KEYS.exchangeMappings, mappings);
   } else {
     saveJSON(KEYS.exchangeMappings, mappings);
   }
@@ -211,9 +213,10 @@ export async function loadImportHistoryAsync(): Promise<Record<string, ImportRec
   return (await loadEncrypted<Record<string, ImportRecord>>(KEYS.importHistory)) ?? {};
 }
 
-export function saveImportHistory(history: Record<string, ImportRecord>): void {
+/** Save import history — awaits encryption to ensure data is written before returning */
+export async function saveImportHistory(history: Record<string, ImportRecord>): Promise<void> {
   if (_encryptionKey) {
-    saveEncrypted(KEYS.importHistory, history);
+    await saveEncrypted(KEYS.importHistory, history);
   } else {
     saveJSON(KEYS.importHistory, history);
   }
@@ -311,9 +314,10 @@ export async function loadAuditLogAsync(): Promise<AuditEntry[]> {
   return (await loadEncrypted<AuditEntry[]>(KEYS.auditLog)) ?? [];
 }
 
-export function saveAuditLog(entries: AuditEntry[]): void {
+/** Save audit log — awaits encryption to ensure data is written before returning */
+export async function saveAuditLog(entries: AuditEntry[]): Promise<void> {
   if (_encryptionKey) {
-    saveEncrypted(KEYS.auditLog, entries);
+    await saveEncrypted(KEYS.auditLog, entries);
   } else {
     saveJSON(KEYS.auditLog, entries);
   }
@@ -366,9 +370,9 @@ export async function restoreAllData(data: {
 }): Promise<void> {
   await saveTransactionsAsync(data.transactions);
   await saveRecordedSalesAsync(data.recordedSales);
-  saveMappings(data.mappings);
-  saveImportHistory(data.importHistory);
-  saveAuditLog(data.auditLog);
+  await saveMappingsAsync(data.mappings);
+  await saveImportHistoryAsync(data.importHistory);
+  await saveAuditLogAsync(data.auditLog);
   savePreferences(data.preferences);
 }
 

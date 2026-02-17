@@ -47,8 +47,8 @@ export function AddTransactionView() {
     }
   }, [date, amountStr, state]);
 
-  const commitTransaction = (txn: Transaction) => {
-    state.addTransaction(txn);
+  const commitTransaction = async (txn: Transaction) => {
+    await state.addTransaction(txn);
     setSuccess(`${TransactionTypeDisplayNames[txn.transactionType]} of ${formatBTC(txn.amountBTC)} BTC added`);
     setAmountStr(""); setPriceStr(""); setTotalStr(""); setFeeStr(""); setWallet(""); setNotes(""); setIncomeType("");
     setPendingTxn(null);

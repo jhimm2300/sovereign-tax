@@ -102,18 +102,18 @@ export function ImportView() {
       return;
     }
 
-    const dedup = state.addTransactionsDeduped(result.transactions);
+    const dedup = await state.addTransactionsDeduped(result.transactions);
     setImportStatus({ type: "success", count: dedup.added, skipped: result.skippedRows.length, duplicates: dedup.duplicates, nonBtcSkipped: 0 });
 
     // Record import
     const hash = await computeHash(pendingContent);
-    state.recordImport(hash, pendingFileName || "unknown.csv", dedup.added);
+    await state.recordImport(hash, pendingFileName || "unknown.csv", dedup.added);
 
     // Save mapping
     if (exchange !== "Unknown") {
       const mappings = state.loadMappings();
       mappings[exchange] = finalMapping;
-      state.saveMappings(mappings);
+      await state.saveMappings(mappings);
     }
 
     setPendingContent(null);

@@ -57,18 +57,18 @@ interface AppStateContextType {
   allTransactions: Transaction[];
 
   // Actions
-  addTransactions: (txns: Transaction[]) => void;
-  addTransactionsDeduped: (txns: Transaction[]) => { added: number; duplicates: number };
-  addTransaction: (txn: Transaction) => void;
-  deleteTransaction: (id: string) => void;
-  updateTransaction: (id: string, updates: Partial<Omit<Transaction, "id">>) => void;
-  updateTransactionPrice: (id: string, price: number) => void;
-  recordSale: (sale: SaleRecord) => void;
+  addTransactions: (txns: Transaction[]) => Promise<void>;
+  addTransactionsDeduped: (txns: Transaction[]) => Promise<{ added: number; duplicates: number }>;
+  addTransaction: (txn: Transaction) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
+  updateTransaction: (id: string, updates: Partial<Omit<Transaction, "id">>) => Promise<void>;
+  updateTransactionPrice: (id: string, price: number) => Promise<void>;
+  recordSale: (sale: SaleRecord) => Promise<void>;
   clearAllData: () => void;
   computeFileHash: (content: string) => Promise<string>;
   checkImportHistory: (hash: string) => ImportRecord | undefined;
-  recordImport: (hash: string, fileName: string, count: number) => void;
-  saveMappings: (mappings: Record<string, ColumnMapping>) => void;
+  recordImport: (hash: string, fileName: string, count: number) => Promise<void>;
+  saveMappings: (mappings: Record<string, ColumnMapping>) => Promise<void>;
   loadMappings: () => Record<string, ColumnMapping>;
 
   // Backup
@@ -76,7 +76,7 @@ interface AppStateContextType {
   restoreBackup: (file: File) => Promise<void>;
 
   // Audit
-  appendAuditLog: (action: AuditAction, details: string) => void;
+  appendAuditLog: (action: AuditAction, details: string) => Promise<void>;
 }
 
 const AppStateContext = createContext<AppStateContextType | null>(null);
@@ -151,14 +151,16 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isUnlocked]);
 
-  // Audit log helper — appends and persists
-  const appendAuditLog = useCallback((action: AuditAction, details: string) => {
+  // Ref for audit log to avoid stale closures
+  const auditLogRef = useRef<AuditEntry[]>([]);
+  useEffect(() => { auditLogRef.current = auditLog; }, [auditLog]);
+
+  // Audit log helper — appends and persists (awaits encryption)
+  const appendAuditLog = useCallback(async (action: AuditAction, details: string) => {
     const entry = createAuditEntry(action, details);
-    setAuditLog((prev) => {
-      const next = [...prev, entry];
-      persistence.saveAuditLog(next);
-      return next;
-    });
+    const next = [...auditLogRef.current, entry];
+    setAuditLog(next);
+    await persistence.saveAuditLog(next);
   }, []);
 
   /**
@@ -276,32 +278,34 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     return Array.from(wallets).sort();
   }, [allTransactions]);
 
-  // Actions
-  const addTransactions = useCallback((txns: Transaction[]) => {
-    setTransactions((prev) => {
-      const next = [...prev, ...txns];
-      persistence.saveTransactions(next);
-      return next;
-    });
+  // Ref to track latest transactions for async save (avoids stale closure in setState)
+  const transactionsRef = useRef<Transaction[]>([]);
+  const recordedSalesRef = useRef<SaleRecord[]>([]);
+
+  // Keep refs in sync with state
+  useEffect(() => { transactionsRef.current = transactions; }, [transactions]);
+  useEffect(() => { recordedSalesRef.current = recordedSales; }, [recordedSales]);
+
+  // Actions — all save operations now await encryption before returning
+  const addTransactions = useCallback(async (txns: Transaction[]) => {
+    const next = [...transactionsRef.current, ...txns];
+    setTransactions(next);
+    await persistence.saveTransactions(next);
     appendAuditLog(AuditAction.TransactionImport, `Imported ${txns.length} transactions`);
   }, [appendAuditLog]);
 
   const addTransactionsDeduped = useCallback(
-    (newTxns: Transaction[]) => {
-      let added = 0;
-      let duplicates = 0;
-      setTransactions((prev) => {
-        const existingKeys = new Set(prev.map(transactionNaturalKey));
-        const unique = newTxns.filter((t) => !existingKeys.has(transactionNaturalKey(t)));
-        added = unique.length;
-        duplicates = newTxns.length - unique.length;
-        if (unique.length > 0) {
-          const next = [...prev, ...unique];
-          persistence.saveTransactions(next);
-          return next;
-        }
-        return prev;
-      });
+    async (newTxns: Transaction[]) => {
+      const prev = transactionsRef.current;
+      const existingKeys = new Set(prev.map(transactionNaturalKey));
+      const unique = newTxns.filter((t) => !existingKeys.has(transactionNaturalKey(t)));
+      const added = unique.length;
+      const duplicates = newTxns.length - unique.length;
+      if (unique.length > 0) {
+        const next = [...prev, ...unique];
+        setTransactions(next);
+        await persistence.saveTransactions(next);
+      }
       if (added > 0) {
         appendAuditLog(AuditAction.TransactionImport, `Imported ${added} transactions (${duplicates} duplicates skipped)`);
       }
@@ -310,60 +314,51 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [appendAuditLog]
   );
 
-  const addTransaction = useCallback((txn: Transaction) => {
-    setTransactions((prev) => {
-      const next = [...prev, txn];
-      persistence.saveTransactions(next);
-      return next;
-    });
+  const addTransaction = useCallback(async (txn: Transaction) => {
+    const next = [...transactionsRef.current, txn];
+    setTransactions(next);
+    await persistence.saveTransactions(next);
     appendAuditLog(AuditAction.TransactionAdd, `Added ${txn.transactionType} of ${txn.amountBTC.toFixed(8)} BTC`);
   }, [appendAuditLog]);
 
-  const deleteTransaction = useCallback((id: string) => {
-    setTransactions((prev) => {
-      const deleted = prev.find((t) => t.id === id);
-      const next = prev.filter((t) => t.id !== id);
-      persistence.saveTransactions(next);
-      if (deleted) {
-        appendAuditLog(AuditAction.TransactionDelete, `Deleted ${deleted.transactionType} of ${deleted.amountBTC.toFixed(8)} BTC from ${deleted.exchange}`);
-      }
-      return next;
-    });
+  const deleteTransaction = useCallback(async (id: string) => {
+    const prev = transactionsRef.current;
+    const deleted = prev.find((t) => t.id === id);
+    const next = prev.filter((t) => t.id !== id);
+    setTransactions(next);
+    await persistence.saveTransactions(next);
+    if (deleted) {
+      appendAuditLog(AuditAction.TransactionDelete, `Deleted ${deleted.transactionType} of ${deleted.amountBTC.toFixed(8)} BTC from ${deleted.exchange}`);
+    }
   }, [appendAuditLog]);
 
-  const updateTransaction = useCallback((id: string, updates: Partial<Omit<Transaction, "id">>) => {
-    setTransactions((prev) => {
-      const next = prev.map((t) => {
-        if (t.id !== id) return t;
-        return { ...t, ...updates };
-      });
-      persistence.saveTransactions(next);
-      const updated = next.find((t) => t.id === id);
-      if (updated) {
-        appendAuditLog(AuditAction.TransactionEdit, `Edited ${updated.transactionType} of ${updated.amountBTC.toFixed(8)} BTC from ${updated.exchange}`);
-      }
-      return next;
+  const updateTransaction = useCallback(async (id: string, updates: Partial<Omit<Transaction, "id">>) => {
+    const next = transactionsRef.current.map((t) => {
+      if (t.id !== id) return t;
+      return { ...t, ...updates };
     });
+    setTransactions(next);
+    await persistence.saveTransactions(next);
+    const updated = next.find((t) => t.id === id);
+    if (updated) {
+      appendAuditLog(AuditAction.TransactionEdit, `Edited ${updated.transactionType} of ${updated.amountBTC.toFixed(8)} BTC from ${updated.exchange}`);
+    }
   }, [appendAuditLog]);
 
-  const updateTransactionPrice = useCallback((id: string, price: number) => {
-    setTransactions((prev) => {
-      const next = prev.map((t) => {
-        if (t.id !== id) return t;
-        const totalUSD = t.amountBTC * price;
-        return { ...t, pricePerBTC: price, totalUSD };
-      });
-      persistence.saveTransactions(next);
-      return next;
+  const updateTransactionPrice = useCallback(async (id: string, price: number) => {
+    const next = transactionsRef.current.map((t) => {
+      if (t.id !== id) return t;
+      const totalUSD = t.amountBTC * price;
+      return { ...t, pricePerBTC: price, totalUSD };
     });
+    setTransactions(next);
+    await persistence.saveTransactions(next);
   }, []);
 
-  const recordSaleAction = useCallback((sale: SaleRecord) => {
-    setRecordedSales((prev) => {
-      const next = [...prev, sale];
-      persistence.saveRecordedSales(next);
-      return next;
-    });
+  const recordSaleAction = useCallback(async (sale: SaleRecord) => {
+    const next = [...recordedSalesRef.current, sale];
+    setRecordedSales(next);
+    await persistence.saveRecordedSales(next);
     appendAuditLog(AuditAction.SaleRecorded, `Recorded sale of ${sale.amountSold.toFixed(8)} BTC — G/L: $${sale.gainLoss.toFixed(2)}`);
   }, [appendAuditLog]);
 
@@ -384,23 +379,27 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [importHistory]
   );
 
+  // Ref for import history to avoid stale closures
+  const importHistoryRef = useRef<Record<string, ImportRecord>>({});
+  useEffect(() => { importHistoryRef.current = importHistory; }, [importHistory]);
+
   const recordImport = useCallback(
-    (hash: string, fileName: string, count: number) => {
+    async (hash: string, fileName: string, count: number) => {
       const record: ImportRecord = {
         fileHash: hash,
         fileName,
         importDate: new Date().toISOString(),
         transactionCount: count,
       };
-      const next = { ...importHistory, [hash]: record };
+      const next = { ...importHistoryRef.current, [hash]: record };
       setImportHistory(next);
-      persistence.saveImportHistory(next);
+      await persistence.saveImportHistory(next);
     },
-    [importHistory]
+    []
   );
 
-  const saveMappingsAction = useCallback((mappings: Record<string, ColumnMapping>) => {
-    persistence.saveMappings(mappings);
+  const saveMappingsAction = useCallback(async (mappings: Record<string, ColumnMapping>) => {
+    await persistence.saveMappings(mappings);
   }, []);
 
   const loadMappingsAction = useCallback(() => {
