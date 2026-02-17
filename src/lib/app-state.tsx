@@ -64,7 +64,7 @@ interface AppStateContextType {
   updateTransaction: (id: string, updates: Partial<Omit<Transaction, "id">>) => Promise<void>;
   updateTransactionPrice: (id: string, price: number) => Promise<void>;
   recordSale: (sale: SaleRecord) => Promise<void>;
-  clearAllData: () => void;
+  clearAllData: () => Promise<void>;
   computeFileHash: (content: string) => Promise<string>;
   checkImportHistory: (hash: string) => ImportRecord | undefined;
   recordImport: (hash: string, fileName: string, count: number) => Promise<void>;
@@ -198,7 +198,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const entry = createAuditEntry(AuditAction.AppUnlocked, "App unlocked");
     const updatedAudit = [...audit, entry];
     setAuditLog(updatedAudit);
-    persistence.saveAuditLog(updatedAudit);
+    await persistence.saveAuditLog(updatedAudit);
   }, []);
 
   /**
@@ -291,7 +291,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const next = [...transactionsRef.current, ...txns];
     setTransactions(next);
     await persistence.saveTransactions(next);
-    appendAuditLog(AuditAction.TransactionImport, `Imported ${txns.length} transactions`);
+    await appendAuditLog(AuditAction.TransactionImport, `Imported ${txns.length} transactions`);
   }, [appendAuditLog]);
 
   const addTransactionsDeduped = useCallback(
@@ -307,7 +307,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         await persistence.saveTransactions(next);
       }
       if (added > 0) {
-        appendAuditLog(AuditAction.TransactionImport, `Imported ${added} transactions (${duplicates} duplicates skipped)`);
+        await appendAuditLog(AuditAction.TransactionImport, `Imported ${added} transactions (${duplicates} duplicates skipped)`);
       }
       return { added, duplicates };
     },
@@ -318,7 +318,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const next = [...transactionsRef.current, txn];
     setTransactions(next);
     await persistence.saveTransactions(next);
-    appendAuditLog(AuditAction.TransactionAdd, `Added ${txn.transactionType} of ${txn.amountBTC.toFixed(8)} BTC`);
+    await appendAuditLog(AuditAction.TransactionAdd, `Added ${txn.transactionType} of ${txn.amountBTC.toFixed(8)} BTC`);
   }, [appendAuditLog]);
 
   const deleteTransaction = useCallback(async (id: string) => {
@@ -328,7 +328,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setTransactions(next);
     await persistence.saveTransactions(next);
     if (deleted) {
-      appendAuditLog(AuditAction.TransactionDelete, `Deleted ${deleted.transactionType} of ${deleted.amountBTC.toFixed(8)} BTC from ${deleted.exchange}`);
+      await appendAuditLog(AuditAction.TransactionDelete, `Deleted ${deleted.transactionType} of ${deleted.amountBTC.toFixed(8)} BTC from ${deleted.exchange}`);
     }
   }, [appendAuditLog]);
 
@@ -341,7 +341,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     await persistence.saveTransactions(next);
     const updated = next.find((t) => t.id === id);
     if (updated) {
-      appendAuditLog(AuditAction.TransactionEdit, `Edited ${updated.transactionType} of ${updated.amountBTC.toFixed(8)} BTC from ${updated.exchange}`);
+      await appendAuditLog(AuditAction.TransactionEdit, `Edited ${updated.transactionType} of ${updated.amountBTC.toFixed(8)} BTC from ${updated.exchange}`);
     }
   }, [appendAuditLog]);
 
@@ -359,15 +359,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const next = [...recordedSalesRef.current, sale];
     setRecordedSales(next);
     await persistence.saveRecordedSales(next);
-    appendAuditLog(AuditAction.SaleRecorded, `Recorded sale of ${sale.amountSold.toFixed(8)} BTC — G/L: $${sale.gainLoss.toFixed(2)}`);
+    await appendAuditLog(AuditAction.SaleRecorded, `Recorded sale of ${sale.amountSold.toFixed(8)} BTC — G/L: $${sale.gainLoss.toFixed(2)}`);
   }, [appendAuditLog]);
 
-  const clearAllData = useCallback(() => {
+  const clearAllData = useCallback(async () => {
     setTransactions([]);
     setRecordedSales([]);
     setImportHistory({});
     persistence.clearAllData();
-    appendAuditLog(AuditAction.DataCleared, "All transaction data cleared");
+    await appendAuditLog(AuditAction.DataCleared, "All transaction data cleared");
   }, [appendAuditLog]);
 
   const computeFileHash = useCallback(async (content: string) => {
@@ -418,7 +418,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       data.preferences
     );
     downloadBackup(bundle);
-    appendAuditLog(AuditAction.BackupCreated, `Backup created with ${data.transactions.length} transactions`);
+    await appendAuditLog(AuditAction.BackupCreated, `Backup created with ${data.transactions.length} transactions`);
   }, [appendAuditLog]);
 
   const restoreBackupAction = useCallback(async (file: File) => {
@@ -434,7 +434,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setImportHistory(bundle.data.importHistory);
     setAuditLog(bundle.data.auditLog);
 
-    appendAuditLog(AuditAction.BackupRestored, `Backup restored from ${file.name} (${bundle.data.transactions.length} transactions)`);
+    await appendAuditLog(AuditAction.BackupRestored, `Backup restored from ${file.name} (${bundle.data.transactions.length} transactions)`);
   }, [appendAuditLog]);
 
   const value: AppStateContextType = {

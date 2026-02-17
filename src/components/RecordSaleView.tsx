@@ -87,7 +87,7 @@ export function RecordSaleView() {
     setAmountStr(""); setPriceStr("");
   };
 
-  const confirmSale = () => {
+  const confirmSale = async () => {
     if (!preview) return;
 
     // Check for similar existing sell transactions on same day
@@ -103,7 +103,7 @@ export function RecordSaleView() {
       return;
     }
 
-    commitSale();
+    await commitSale();
   };
 
   return (
@@ -152,7 +152,7 @@ export function RecordSaleView() {
           <button className="btn-secondary" onClick={generatePreview}>
             {isSpecificID ? "🔍 Select Lots" : "👁️ Preview"}
           </button>
-          {preview && <button className="btn-primary" onClick={confirmSale}>✅ Record Sale</button>}
+          {preview && <button className="btn-primary" onClick={async () => { await confirmSale(); }}>✅ Record Sale</button>}
         </div>
       </div>
 
@@ -236,7 +236,7 @@ export function RecordSaleView() {
               <button className="btn-secondary text-sm" onClick={() => { setPendingConfirm(false); setDuplicateMatches([]); }}>Cancel</button>
               <button
                 className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
-                onClick={commitSale}
+                onClick={async () => { await commitSale(); }}
               >
                 Record Anyway
               </button>

@@ -112,7 +112,7 @@ export function SettingsView() {
           {showClearConfirm ? (
             <div className="flex items-center gap-3">
               <span className="text-sm text-red-500">Delete all data? This cannot be undone.</span>
-              <button className="btn-danger text-sm" onClick={() => { state.clearAllData(); setShowClearConfirm(false); }}>
+              <button className="btn-danger text-sm" onClick={async () => { await state.clearAllData(); setShowClearConfirm(false); }}>
                 Confirm Delete
               </button>
               <button className="btn-secondary text-sm" onClick={() => setShowClearConfirm(false)}>Cancel</button>

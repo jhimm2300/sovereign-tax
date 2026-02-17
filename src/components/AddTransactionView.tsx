@@ -55,7 +55,7 @@ export function AddTransactionView() {
     setDuplicateMatches([]);
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     setError(null); setSuccess(null);
     const amount = Number(amountStr);
     if (!amount || amount <= 0) { setError("Enter a valid BTC amount"); return; }
@@ -99,7 +99,7 @@ export function AddTransactionView() {
       return;
     }
 
-    commitTransaction(txn);
+    await commitTransaction(txn);
   };
 
   return (
@@ -203,7 +203,7 @@ export function AddTransactionView() {
         </div>
 
         <div className="pt-2">
-          <button className="btn-primary" onClick={handleAdd}>➕ Add Transaction</button>
+          <button className="btn-primary" onClick={async () => { await handleAdd(); }}>➕ Add Transaction</button>
         </div>
       </div>
 
@@ -238,7 +238,7 @@ export function AddTransactionView() {
               <button className="btn-secondary text-sm" onClick={() => { setPendingTxn(null); setDuplicateMatches([]); }}>Cancel</button>
               <button
                 className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
-                onClick={() => commitTransaction(pendingTxn)}
+                onClick={async () => { await commitTransaction(pendingTxn); }}
               >
                 Add Anyway
               </button>

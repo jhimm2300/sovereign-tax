@@ -1,8 +1,8 @@
 {
-  "latest": "1.2.3",
+  "latest": "1.2.4",
   "url": "https://sovereigntax.io",
-  "releaseDate": "2026-02-16",
-  "notes": "Fix data persistence bug, fix version display, auto-inject version from package.json",
+  "releaseDate": "2026-02-17",
+  "notes": "Fix audit log persistence, fix all fire-and-forget async calls in UI handlers",
   "downloads": {
     "macos": "https://sovereigntax.io/downloads/SovereignTax-macOS.dmg",
     "windows": "https://sovereigntax.io/downloads/SovereignTax-Windows.exe",

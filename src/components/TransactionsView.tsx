@@ -168,7 +168,7 @@ export function TransactionsView() {
             </p>
             <div className="flex gap-3 justify-end">
               <button className="btn-secondary text-sm" onClick={() => setDeletingTxn(null)}>Cancel</button>
-              <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium" onClick={handleDelete}>Delete</button>
+              <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium" onClick={async () => { await handleDelete(); }}>Delete</button>
             </div>
           </div>
         </div>
