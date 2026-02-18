@@ -1,8 +1,8 @@
 {
-  "latest": "1.2.48",
+  "latest": "1.3.0",
   "url": "https://sovereigntax.io",
-  "releaseDate": "2026-02-17",
-  "notes": "Notes field for transactions, fee-aware transfer reconciliation with flagged review and manual matching",
+  "releaseDate": "2026-02-18",
+  "notes": "Charitable donations with FMV tracking and Form 8283 export, full Specific ID lot picker for sales and donations",
   "downloads": {
     "macos": "https://sovereigntax.io/downloads/SovereignTax-macOS.dmg",
     "windows": "https://sovereigntax.io/downloads/SovereignTax-Windows.exe",

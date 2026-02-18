@@ -18,21 +18,23 @@ interface MethodResult {
 const comparableMethods = Object.values(AccountingMethod).filter((m) => m !== AccountingMethod.SpecificID);
 
 export function ComparisonView() {
-  const { allTransactions, selectedYear, setSelectedYear, availableYears, setSelectedNav } = useAppState();
+  const { allTransactions, selectedYear, setSelectedYear, availableYears, setSelectedNav, recordedSales } = useAppState();
 
   const results: MethodResult[] = useMemo(() => {
     return comparableMethods.map((method) => {
-      const calc = calculate(allTransactions, method);
+      const calc = calculate(allTransactions, method, recordedSales);
       const salesForYear = calc.sales.filter((s) => new Date(s.saleDate).getFullYear() === selectedYear);
+      // Exclude donations from stGL/ltGL — they have salePricePerBTC=0 which would produce phantom losses
+      const taxableSales = salesForYear.filter((s) => !s.isDonation);
       return {
         method,
         totalGL: salesForYear.reduce((a, s) => a + s.gainLoss, 0),
-        stGL: salesForYear.reduce((a, s) => a + s.lotDetails.filter((d) => !d.isLongTerm).reduce((sum, d) => sum + (d.amountBTC * s.salePricePerBTC - d.totalCost), 0), 0),
-        ltGL: salesForYear.reduce((a, s) => a + s.lotDetails.filter((d) => d.isLongTerm).reduce((sum, d) => sum + (d.amountBTC * s.salePricePerBTC - d.totalCost), 0), 0),
-        salesCount: salesForYear.length,
+        stGL: taxableSales.reduce((a, s) => a + s.lotDetails.filter((d) => !d.isLongTerm).reduce((sum, d) => sum + (d.amountBTC * s.salePricePerBTC - d.totalCost), 0), 0),
+        ltGL: taxableSales.reduce((a, s) => a + s.lotDetails.filter((d) => d.isLongTerm).reduce((sum, d) => sum + (d.amountBTC * s.salePricePerBTC - d.totalCost), 0), 0),
+        salesCount: salesForYear.filter((s) => !s.isDonation).length,
       };
     });
-  }, [allTransactions, selectedYear]);
+  }, [allTransactions, selectedYear, recordedSales]);
 
   const bestMethod = results.reduce((best, r) => (r.totalGL < best.totalGL ? r : best), results[0]);
 

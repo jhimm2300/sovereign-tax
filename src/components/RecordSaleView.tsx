@@ -23,7 +23,7 @@ export function RecordSaleView() {
   const [pendingConfirm, setPendingConfirm] = useState(false);
   const [duplicateMatches, setDuplicateMatches] = useState<typeof state.transactions>([]);
 
-  const fullResult = useMemo(() => calculate(state.allTransactions, method), [state.allTransactions, method]);
+  const fullResult = useMemo(() => calculate(state.allTransactions, method, state.recordedSales), [state.allTransactions, method, state.recordedSales]);
 
   const isSpecificID = method === AccountingMethod.SpecificID;
 

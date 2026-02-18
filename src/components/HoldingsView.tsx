@@ -6,9 +6,9 @@ import { AccountingMethod } from "../lib/types";
 import { HelpPanel } from "./HelpPanel";
 
 export function HoldingsView() {
-  const { allTransactions, selectedMethod, setSelectedMethod, priceState, privacyBlur, setPrivacyBlur, setSelectedNav, selectedWallet, setSelectedWallet, availableWallets } = useAppState();
+  const { allTransactions, selectedMethod, setSelectedMethod, priceState, privacyBlur, setPrivacyBlur, setSelectedNav, selectedWallet, setSelectedWallet, availableWallets, recordedSales } = useAppState();
 
-  const result = useMemo(() => calculate(allTransactions, selectedMethod), [allTransactions, selectedMethod]);
+  const result = useMemo(() => calculate(allTransactions, selectedMethod, recordedSales), [allTransactions, selectedMethod, recordedSales]);
 
   const activeLots = result.lots.filter((l) => {
     if (l.remainingBTC <= 0) return false;

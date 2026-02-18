@@ -45,14 +45,36 @@ export interface LotSelection {
 /**
  * Cost Basis Engine — pure calculation, no side effects.
  * Supports FIFO, LIFO, HIFO, and Specific Identification methods.
+ *
+ * Lot IDs are deterministic (derived from source transaction ID) so that
+ * Specific ID lot selections in recordedSales can reliably match lots
+ * across multiple calculate() calls.
+ *
+ * recordedSales: optional pre-recorded SaleRecords from Specific ID elections.
+ * When a Sell or Donation matches a recorded Specific ID SaleRecord (by date + amount),
+ * the engine uses the recorded lot selections instead of auto-selecting.
+ * This ensures Specific ID elections are permanent and consistent across all views.
  */
 export function calculate(
   transactions: Transaction[],
-  method: AccountingMethod
+  method: AccountingMethod,
+  recordedSales?: SaleRecord[]
 ): CalculationResult {
   const lots: Lot[] = [];
   const sales: SaleRecord[] = [];
   const warnings: string[] = [];
+
+  // Build lookup for recorded Specific ID SaleRecords (keyed by date|amount)
+  // These represent permanent lot elections made by the user at time of disposition
+  const recordedMap = new Map<string, SaleRecord>();
+  if (recordedSales) {
+    for (const rs of recordedSales) {
+      if (rs.method === AccountingMethod.SpecificID) {
+        const key = `${rs.saleDate}|${rs.amountSold.toFixed(8)}`;
+        recordedMap.set(key, rs);
+      }
+    }
+  }
 
   // Sort by date
   const sorted = [...transactions].sort(
@@ -62,7 +84,9 @@ export function calculate(
   for (const trans of sorted) {
     switch (trans.transactionType) {
       case TransactionType.Buy: {
+        // Deterministic lot ID from transaction ID — stable across calculate() calls
         const lot = createLot({
+          id: trans.id,
           purchaseDate: trans.date,
           amountBTC: trans.amountBTC,
           pricePerBTC: trans.pricePerBTC,
@@ -76,11 +100,67 @@ export function calculate(
       }
 
       case TransactionType.Sell: {
-        const sale = processSale(trans, lots, method, undefined, warnings);
+        // Check for a recorded Specific ID election for this sale
+        const key = `${trans.date}|${trans.amountBTC.toFixed(8)}`;
+        const recorded = recordedMap.get(key);
+        let lotSelections = recorded ? extractLotSelections(recorded, lots) : undefined;
+        let effectiveMethod = recorded ? AccountingMethod.SpecificID : method;
+
+        // If recorded but lot matching failed (legacy data), fall back to current method with warning
+        if (recorded && lotSelections && lotSelections.length === 0) {
+          warnings.push(
+            `Specific ID election for sale on ${formatDateShort(trans.date)} could not resolve lot IDs (legacy recording). Using ${method} as fallback.`
+          );
+          lotSelections = undefined;
+          effectiveMethod = method;
+        }
+
+        const sale = processSale(trans, lots, effectiveMethod, lotSelections, warnings);
         if (sale) {
           sales.push(sale);
         } else {
           warnings.push(`No lots available for sale on ${formatDateShort(trans.date)}`);
+        }
+        break;
+      }
+
+      case TransactionType.Donation: {
+        // Donation consumes lots like a sale but with zero proceeds (non-taxable disposition)
+        const originalFmvPerBTC = trans.pricePerBTC;
+
+        // Check for a recorded Specific ID election for this donation
+        const key = `${trans.date}|${trans.amountBTC.toFixed(8)}`;
+        const recorded = recordedMap.get(key);
+        let lotSelections = recorded ? extractLotSelections(recorded, lots) : undefined;
+        let effectiveMethod = recorded ? AccountingMethod.SpecificID : method;
+
+        // If recorded but lot matching failed (legacy data), fall back to current method with warning
+        if (recorded && lotSelections && lotSelections.length === 0) {
+          warnings.push(
+            `Specific ID election for donation on ${formatDateShort(trans.date)} could not resolve lot IDs (legacy recording). Using ${method} as fallback.`
+          );
+          lotSelections = undefined;
+          effectiveMethod = method;
+        }
+
+        const donationAsSale: Transaction = {
+          ...trans,
+          pricePerBTC: 0,
+          totalUSD: 0,
+        };
+        const donationResult = processSale(donationAsSale, lots, effectiveMethod, lotSelections, warnings);
+        if (donationResult) {
+          // Override: zero proceeds, zero gain/loss (donations are not capital gains events per IRC §170)
+          donationResult.totalProceeds = 0;
+          donationResult.salePricePerBTC = 0;
+          donationResult.gainLoss = 0;
+          donationResult.isDonation = true;
+          // Store original FMV for Form 8283 reporting (pro-rate if partially filled)
+          donationResult.donationFmvPerBTC = originalFmvPerBTC;
+          donationResult.donationFmvTotal = donationResult.amountSold * originalFmvPerBTC;
+          sales.push(donationResult);
+        } else {
+          warnings.push(`No lots available for donation on ${formatDateShort(trans.date)}`);
         }
         break;
       }
@@ -93,6 +173,45 @@ export function calculate(
   }
 
   return { lots, sales, warnings };
+}
+
+/**
+ * Extract lot selections from a recorded SaleRecord.
+ * Maps lotDetails back to LotSelection format that processSale() expects.
+ * Uses lotId (= source Buy transaction ID, now deterministic) for matching.
+ *
+ * Legacy migration: pre-v1.2.49 recordings lack lotId on LotDetails.
+ * For those, we match against current lots by purchaseDate + costBasisPerBTC
+ * to recover the user's original lot election.
+ */
+function extractLotSelections(recorded: SaleRecord, currentLots?: Lot[]): LotSelection[] {
+  const selections: LotSelection[] = [];
+  const usedLotIds = new Set<string>();
+
+  for (const d of recorded.lotDetails) {
+    if (d.lotId) {
+      // New-style: has deterministic lotId
+      selections.push({ lotId: d.lotId, amountBTC: d.amountBTC });
+      usedLotIds.add(d.lotId);
+    } else if (currentLots) {
+      // Legacy migration: match by purchaseDate + costBasisPerBTC + exchange
+      // These properties uniquely identify which Buy transaction (= lot) was used
+      const match = currentLots.find(
+        (lot) =>
+          !usedLotIds.has(lot.id) &&
+          lot.purchaseDate === d.purchaseDate &&
+          Math.abs(lot.pricePerBTC - d.costBasisPerBTC) < 0.005 &&
+          lot.exchange === d.exchange
+      );
+      if (match) {
+        selections.push({ lotId: match.id, amountBTC: d.amountBTC });
+        usedLotIds.add(match.id);
+      }
+      // If no match found, this lot detail is dropped — FIFO fallback will cover it
+    }
+  }
+
+  return selections;
 }
 
 /**
@@ -194,6 +313,7 @@ function processSale(
 
       lotDetails.push({
         id: crypto.randomUUID(),
+        lotId: lots[lotIdx].id,
         purchaseDate: lots[lotIdx].purchaseDate,
         amountBTC: sellFromLot,
         costBasisPerBTC,
@@ -244,6 +364,7 @@ function processSale(
 
       lotDetails.push({
         id: crypto.randomUUID(),
+        lotId: lots[idx].id,
         purchaseDate: lots[idx].purchaseDate,
         amountBTC: sellFromLot,
         costBasisPerBTC,

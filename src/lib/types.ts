@@ -19,6 +19,7 @@ export enum TransactionType {
   Sell = "sell",
   TransferIn = "transfer_in",
   TransferOut = "transfer_out",
+  Donation = "donation",
 }
 
 export const TransactionTypeDisplayNames: Record<TransactionType, string> = {
@@ -26,6 +27,7 @@ export const TransactionTypeDisplayNames: Record<TransactionType, string> = {
   [TransactionType.Sell]: "Sell",
   [TransactionType.TransferIn]: "Transfer In",
   [TransactionType.TransferOut]: "Transfer Out",
+  [TransactionType.Donation]: "Donation",
 };
 
 // Income types for Schedule 1 classification
@@ -143,6 +145,14 @@ export function parseTransactionType(input: string): TransactionType | null {
     case "pro withdrawal":
     case "prime withdrawal":
       return TransactionType.TransferOut;
+
+    // Donation
+    case "donation":
+    case "donate":
+    case "gift":
+    case "charitable":
+    case "charity":
+      return TransactionType.Donation;
   }
 
   // Substring fallbacks
@@ -151,6 +161,7 @@ export function parseTransactionType(input: string): TransactionType | null {
   if (lower.includes("reward") || lower.includes("income") || lower.includes("earn")) return TransactionType.Buy;
   if (lower.includes("withdrawal") || lower.includes("withdraw")) return TransactionType.TransferOut;
   if (lower.includes("deposit") || lower.includes("receive") || lower.includes("migration")) return TransactionType.TransferIn;
+  if (lower.includes("donation") || lower.includes("donat") || lower.includes("charit") || lower.includes("gift")) return TransactionType.Donation;
 
   return null;
 }

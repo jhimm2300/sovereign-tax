@@ -19,7 +19,7 @@ export function SimulationView() {
   const [error, setError] = useState<string | null>(null);
   const [showLotPicker, setShowLotPicker] = useState(false);
 
-  const fullResult = useMemo(() => calculate(allTransactions, method), [allTransactions, method]);
+  const fullResult = useMemo(() => calculate(allTransactions, method, state.recordedSales), [allTransactions, method, state.recordedSales]);
 
   const isSpecificID = method === AccountingMethod.SpecificID;
 

@@ -132,7 +132,7 @@ export function reconcileTransfers(transactions: Transaction[]): ReconciliationR
     }
     if (t.transactionType === TransactionType.Buy || t.transactionType === TransactionType.TransferIn) {
       balances[ex].totalIn += t.amountBTC;
-    } else if (t.transactionType === TransactionType.Sell || t.transactionType === TransactionType.TransferOut) {
+    } else if (t.transactionType === TransactionType.Sell || t.transactionType === TransactionType.TransferOut || t.transactionType === TransactionType.Donation) {
       balances[ex].totalOut += t.amountBTC;
     }
   }

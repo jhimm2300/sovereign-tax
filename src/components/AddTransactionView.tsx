@@ -1,8 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useAppState } from "../lib/app-state";
-import { createTransaction, Transaction } from "../lib/models";
+import { createTransaction, Transaction, SaleRecord } from "../lib/models";
 import { TransactionType, TransactionTypeDisplayNames, IncomeType, IncomeTypeDisplayNames } from "../lib/types";
-import { formatUSD, formatBTC, formatDateTime, findSimilarTransactions } from "../lib/utils";
+import { AccountingMethod } from "../lib/types";
+import { formatUSD, formatBTC, formatDate, formatDateTime, findSimilarTransactions } from "../lib/utils";
+import { calculate, simulateSale, LotSelection } from "../lib/cost-basis";
+import { LotPicker } from "./LotPicker";
 import { HelpPanel } from "./HelpPanel";
 
 export function AddTransactionView() {
@@ -26,6 +29,18 @@ export function AddTransactionView() {
   const [pendingTxn, setPendingTxn] = useState<Transaction | null>(null);
   const [duplicateMatches, setDuplicateMatches] = useState<typeof state.transactions>([]);
 
+  // Donation lot preview state
+  const [donationMethod, setDonationMethod] = useState(AccountingMethod.FIFO);
+  const [donationPreview, setDonationPreview] = useState<SaleRecord | null>(null);
+  const [showLotPicker, setShowLotPicker] = useState(false);
+  const [lotSelections, setLotSelections] = useState<LotSelection[] | null>(null);
+
+  // Current lots for donation preview (only computed when needed)
+  const currentLots = useMemo(() => {
+    if (type !== TransactionType.Donation) return [];
+    return calculate(state.allTransactions, donationMethod, state.recordedSales).lots;
+  }, [state.allTransactions, donationMethod, type, state.recordedSales]);
+
   /** Auto-fetch historical FMV for income transactions */
   const fetchFMV = useCallback(async () => {
     if (!date || !state.livePriceEnabled) return;
@@ -47,12 +62,71 @@ export function AddTransactionView() {
     }
   }, [date, amountStr, state]);
 
+  const isDonationSpecificID = type === TransactionType.Donation && donationMethod === AccountingMethod.SpecificID;
+
+  /** Preview which lots will be consumed by this donation */
+  const previewDonationLots = () => {
+    setError(null);
+    setDonationPreview(null);
+    const amount = Number(amountStr);
+    if (!amount || amount <= 0) { setError("Enter a valid BTC amount to preview"); return; }
+
+    if (isDonationSpecificID) {
+      // Show lot picker for manual selection
+      setShowLotPicker(true);
+      setLotSelections(null);
+      return;
+    }
+
+    const walletFilter = wallet || undefined;
+    const dateISO = new Date(date + "T12:00:00").toISOString();
+    // Simulate with price=0 since donations have no proceeds — we just need the lot details
+    const sim = simulateSale(amount, 0, currentLots, donationMethod, undefined, walletFilter, dateISO);
+    if (!sim) { setError("Not enough BTC in available lots for this donation amount"); return; }
+    setDonationPreview(sim);
+  };
+
+  /** Handle lot picker confirmation for Specific ID donations */
+  const handleDonationLotConfirm = (selections: LotSelection[]) => {
+    setShowLotPicker(false);
+    setLotSelections(selections);
+    const amount = Number(amountStr);
+    const walletFilter = wallet || undefined;
+    const dateISO = new Date(date + "T12:00:00").toISOString();
+    const sim = simulateSale(amount, 0, currentLots, AccountingMethod.SpecificID, selections, walletFilter, dateISO);
+    if (!sim) { setError("Not enough BTC from selected lots"); return; }
+    setDonationPreview(sim);
+  };
+
+  const handleDonationLotCancel = () => {
+    setShowLotPicker(false);
+  };
+
   const commitTransaction = async (txn: Transaction) => {
     await state.addTransaction(txn);
+
+    // For Specific ID donations, save the SaleRecord as a permanent lot election
+    if (txn.transactionType === TransactionType.Donation && donationMethod === AccountingMethod.SpecificID && donationPreview && lotSelections) {
+      const price = useLive ? state.priceState.currentPrice! : Number(priceStr);
+      const saleRecord: SaleRecord = {
+        ...donationPreview,
+        id: crypto.randomUUID(),
+        saleDate: txn.date,
+        isDonation: true,
+        donationFmvPerBTC: price,
+        donationFmvTotal: donationPreview.amountSold * price,
+        method: AccountingMethod.SpecificID,
+      };
+      await state.recordSale(saleRecord);
+    }
+
     setSuccess(`${TransactionTypeDisplayNames[txn.transactionType]} of ${formatBTC(txn.amountBTC)} BTC added`);
     setAmountStr(""); setPriceStr(""); setTotalStr(""); setFeeStr(""); setWallet(""); setNotes(""); setIncomeType("");
     setPendingTxn(null);
     setDuplicateMatches([]);
+    setDonationPreview(null);
+    setLotSelections(null);
+    setShowLotPicker(false);
   };
 
   const handleAdd = async () => {
@@ -60,9 +134,10 @@ export function AddTransactionView() {
     const amount = Number(amountStr);
     if (!amount || amount <= 0) { setError("Enter a valid BTC amount"); return; }
     const price = useLive ? state.priceState.currentPrice! : Number(priceStr);
-    if (!price || price <= 0) { setError("Enter a valid price"); return; }
+    const isTransfer = type === TransactionType.TransferIn || type === TransactionType.TransferOut;
+    if (!isTransfer && (!price || price <= 0)) { setError(type === TransactionType.Donation ? "Enter the Fair Market Value (FMV) per BTC on the date of donation" : "Enter a valid price"); return; }
     let total = Number(totalStr);
-    if (!total || total <= 0) total = amount * price;
+    if (!total || total <= 0) total = amount * (price || 0);
     const fee = Number(feeStr) || 0;
 
     // Apply fee: buys add fee to cost basis, sells subtract from proceeds
@@ -105,7 +180,7 @@ export function AddTransactionView() {
   return (
     <div className="p-8 max-w-3xl">
       <h1 className="text-3xl font-bold mb-1">Add Transaction</h1>
-      <HelpPanel subtitle="Manually add a buy, sell, transfer, or income transaction that wasn't in a CSV import." />
+      <HelpPanel subtitle="Manually add a buy, sell, transfer, donation, or income transaction that wasn't in a CSV import." />
 
       <div className="card space-y-4">
         {/* Type */}
@@ -113,7 +188,7 @@ export function AddTransactionView() {
           <span className="w-24 text-right text-gray-500">Type:</span>
           <div className="segmented">
             {Object.values(TransactionType).map((t) => (
-              <button key={t} className={`segmented-btn ${type === t ? "active" : ""}`} onClick={() => setType(t)}>
+              <button key={t} className={`segmented-btn ${type === t ? "active" : ""}`} onClick={() => { setType(t); setDonationPreview(null); }}>
                 {TransactionTypeDisplayNames[t]}
               </button>
             ))}
@@ -134,21 +209,36 @@ export function AddTransactionView() {
           </div>
         )}
 
+        {/* Donation Method Selector */}
+        {type === TransactionType.Donation && (
+          <div className="flex items-center gap-4">
+            <span className="w-24 text-right text-gray-500">Method:</span>
+            <div className="segmented">
+              {[AccountingMethod.FIFO, AccountingMethod.LIFO, AccountingMethod.HIFO, AccountingMethod.SpecificID].map((m) => (
+                <button key={m} className={`segmented-btn ${donationMethod === m ? "active" : ""}`} onClick={() => { setDonationMethod(m); setDonationPreview(null); setShowLotPicker(false); setLotSelections(null); }}>
+                  {m}
+                </button>
+              ))}
+            </div>
+            <span className="text-xs text-gray-400">{isDonationSpecificID ? "Choose exactly which lots to donate" : "Controls which lots are consumed"}</span>
+          </div>
+        )}
+
         {/* Date */}
         <div className="flex items-center gap-4">
           <span className="w-24 text-right text-gray-500">Date:</span>
-          <input type="date" className="input w-48" value={date} onChange={(e) => setDate(e.target.value)} />
+          <input type="date" className="input w-48" value={date} onChange={(e) => { setDate(e.target.value); setDonationPreview(null); }} />
         </div>
 
         {/* Amount */}
         <div className="flex items-center gap-4">
           <span className="w-24 text-right text-gray-500">BTC Amount:</span>
-          <input className="input w-48" placeholder="0.00000000" value={amountStr} onChange={(e) => setAmountStr(e.target.value)} />
+          <input className="input w-48" placeholder="0.00000000" value={amountStr} onChange={(e) => { setAmountStr(e.target.value); setDonationPreview(null); }} />
         </div>
 
         {/* Price */}
         <div className="flex items-center gap-4">
-          <span className="w-24 text-right text-gray-500">Price/BTC:</span>
+          <span className="w-24 text-right text-gray-500">{type === TransactionType.Donation ? "FMV/BTC:" : "Price/BTC:"}</span>
           {useLive ? (
             <span className="font-medium tabular-nums">{state.priceState.currentPrice ? formatUSD(state.priceState.currentPrice) : "..."}</span>
           ) : (
@@ -158,7 +248,7 @@ export function AddTransactionView() {
             <input type="checkbox" checked={useLive} onChange={(e) => { setUseLive(e.target.checked); if (e.target.checked) state.fetchPrice(); }} />
             Live Price
           </label>
-          {type === TransactionType.Buy && incomeType && !useLive && state.livePriceEnabled && (
+          {((type === TransactionType.Buy && incomeType) || type === TransactionType.Donation) && !useLive && state.livePriceEnabled && (
             <button
               className="btn-secondary text-xs px-3 py-1"
               onClick={fetchFMV}
@@ -168,6 +258,12 @@ export function AddTransactionView() {
             </button>
           )}
         </div>
+        {type === TransactionType.Donation && (
+          <div className="flex items-center gap-4">
+            <span className="w-24" />
+            <span className="text-xs text-purple-500">Donations consume lots but are not taxable events. Enter FMV for your charitable deduction records.</span>
+          </div>
+        )}
 
         {/* Total */}
         <div className="flex items-center gap-4">
@@ -203,10 +299,85 @@ export function AddTransactionView() {
           <span className="text-xs text-gray-400">{notes.length}/100</span>
         </div>
 
-        <div className="pt-2">
+        <div className="flex gap-3 pt-2">
           <button className="btn-primary" onClick={async () => { await handleAdd(); }}>➕ Add Transaction</button>
+          {type === TransactionType.Donation && (
+            <button className="btn-secondary" onClick={previewDonationLots}>
+              {isDonationSpecificID ? "🔍 Select Lots" : "🔍 Preview Lot Consumption"}
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Lot Picker for Specific ID Donations */}
+      {showLotPicker && isDonationSpecificID && (
+        <div className="mt-4">
+          <LotPicker
+            lots={wallet
+              ? currentLots.filter((l) => (l.wallet || l.exchange || "").toLowerCase() === wallet.toLowerCase())
+              : currentLots}
+            targetAmount={Number(amountStr)}
+            onConfirm={handleDonationLotConfirm}
+            onCancel={handleDonationLotCancel}
+          />
+        </div>
+      )}
+
+      {/* Donation Lot Preview */}
+      {donationPreview && type === TransactionType.Donation && (
+        <div className="card mt-4 border-l-4 border-l-purple-500">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-purple-700 dark:text-purple-400">Lot Consumption Preview ({donationMethod})</h3>
+            <span className="text-xs text-purple-500 font-medium">PREVIEW — not yet recorded</span>
+          </div>
+          {isDonationSpecificID && lotSelections && (
+            <div className="text-xs text-blue-500 mb-2">Using Specific Identification — {lotSelections.length} lot(s) manually selected</div>
+          )}
+          <p className="text-xs text-gray-500 mb-3">
+            These lots will be consumed when this donation is processed. Long-term lots (held &gt;1 year) qualify for a deduction at full Fair Market Value. Short-term lots are deductible at cost basis only.
+          </p>
+
+          {/* Lot details table */}
+          <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr] gap-2 text-xs font-semibold text-gray-500 pb-2 border-b border-gray-200 dark:border-gray-700 mb-1">
+            <div>Purchase Date</div>
+            <div className="text-right">BTC Amount</div>
+            <div className="text-right">Cost Basis</div>
+            <div className="text-right">Days Held</div>
+            <div>Term</div>
+          </div>
+          {donationPreview.lotDetails.map((d, idx) => (
+            <div key={idx} className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr] gap-2 py-1.5 text-sm border-b border-gray-100 dark:border-gray-800">
+              <div>{formatDate(d.purchaseDate)}</div>
+              <div className="text-right tabular-nums">{formatBTC(d.amountBTC)}</div>
+              <div className="text-right tabular-nums">{formatUSD(d.totalCost)}</div>
+              <div className="text-right tabular-nums">{d.daysHeld}</div>
+              <div>
+                <span className={`badge ${d.isLongTerm ? "badge-green" : "badge-orange"} text-xs`}>
+                  {d.isLongTerm ? "Long-term" : "Short-term"}
+                </span>
+              </div>
+            </div>
+          ))}
+
+          {/* Summary */}
+          <div className="mt-3 flex gap-6 text-sm">
+            <div>
+              <span className="text-gray-500">Total BTC:</span>{" "}
+              <span className="tabular-nums font-medium">{formatBTC(donationPreview.amountSold)}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Total Cost Basis:</span>{" "}
+              <span className="tabular-nums font-medium">{formatUSD(donationPreview.costBasis)}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Term:</span>{" "}
+              <span className={`badge ${donationPreview.isLongTerm ? "badge-green" : donationPreview.isMixedTerm ? "badge-blue" : "badge-orange"} text-xs`}>
+                {donationPreview.isMixedTerm ? "Mixed" : donationPreview.isLongTerm ? "Long-term" : "Short-term"}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {success && <div className="bg-green-50 dark:bg-green-900/20 text-green-600 p-4 rounded-lg mt-4">✅ {success}</div>}
       {error && <div className="bg-red-50 dark:bg-red-900/20 text-red-500 p-4 rounded-lg mt-4">⚠️ {error}</div>}

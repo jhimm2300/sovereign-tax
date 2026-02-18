@@ -7,10 +7,10 @@ import { SaleRecord } from "../lib/models";
 import { HelpPanel } from "./HelpPanel";
 
 export function TaxLossHarvestingView() {
-  const { allTransactions, selectedYear, setSelectedYear, availableYears, priceState, fetchPrice, selectedMethod } = useAppState();
+  const { allTransactions, selectedYear, setSelectedYear, availableYears, priceState, fetchPrice, selectedMethod, recordedSales } = useAppState();
   const [harvestResult, setHarvestResult] = useState<SaleRecord | null>(null);
 
-  const result = useMemo(() => calculate(allTransactions, selectedMethod), [allTransactions, selectedMethod]);
+  const result = useMemo(() => calculate(allTransactions, selectedMethod, recordedSales), [allTransactions, selectedMethod, recordedSales]);
   const currentPrice = priceState.currentPrice;
 
   const lotsWithGL = useMemo(() => {

@@ -5,8 +5,8 @@ import { formatUSD, formatBTC, formatDate } from "../lib/utils";
 import { HelpPanel } from "./HelpPanel";
 
 export function LotMaturityView() {
-  const { allTransactions, selectedMethod, setSelectedNav } = useAppState();
-  const result = useMemo(() => calculate(allTransactions, selectedMethod), [allTransactions, selectedMethod]);
+  const { allTransactions, selectedMethod, setSelectedNav, recordedSales } = useAppState();
+  const result = useMemo(() => calculate(allTransactions, selectedMethod, recordedSales), [allTransactions, selectedMethod, recordedSales]);
 
   const now = new Date().toISOString();
 

@@ -14,10 +14,10 @@ interface YearSummary {
 }
 
 export function MultiYearDashboardView() {
-  const { allTransactions, selectedMethod, setSelectedNav } = useAppState();
+  const { allTransactions, selectedMethod, setSelectedNav, recordedSales } = useAppState();
 
   const yearSummaries = useMemo(() => {
-    const result = calculate(allTransactions, selectedMethod);
+    const result = calculate(allTransactions, selectedMethod, recordedSales);
     const byYear: Record<number, YearSummary> = {};
 
     for (const sale of result.sales) {
@@ -26,6 +26,9 @@ export function MultiYearDashboardView() {
         byYear[year] = { year, stGL: 0, ltGL: 0, totalGL: 0, salesCount: 0 };
       }
       byYear[year].totalGL += sale.gainLoss;
+      // Skip donations from salesCount and ST/LT breakdown — they have salePricePerBTC=0
+      // which would produce phantom losses, and they are not taxable capital events
+      if (sale.isDonation) continue;
       byYear[year].salesCount++;
       // Split ST/LT from lot details to handle mixed-term sales correctly
       for (const d of sale.lotDetails) {
@@ -39,7 +42,7 @@ export function MultiYearDashboardView() {
     }
 
     return Object.values(byYear).sort((a, b) => a.year - b.year);
-  }, [allTransactions, selectedMethod]);
+  }, [allTransactions, selectedMethod, recordedSales]);
 
   const lifetimeTotal = yearSummaries.reduce((a, y) => a + y.totalGL, 0);
   const lifetimeST = yearSummaries.reduce((a, y) => a + y.stGL, 0);

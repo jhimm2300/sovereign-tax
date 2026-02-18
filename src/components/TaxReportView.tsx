@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useAppState } from "../lib/app-state";
 import { calculate } from "../lib/cost-basis";
-import { exportForm8949CSV, exportLegacyCSV, exportTurboTaxTXF, exportTurboTaxCSV } from "../lib/export";
+import { exportForm8949CSV, exportLegacyCSV, exportTurboTaxTXF, exportTurboTaxCSV, exportForm8283CSV, buildDonationSummary } from "../lib/export";
 import { exportForm8949PDF } from "../lib/pdf-export";
 import { formatUSD, formatBTC, formatDate } from "../lib/utils";
 import { AccountingMethod } from "../lib/types";
@@ -11,44 +11,35 @@ import { HelpPanel } from "./HelpPanel";
 export function TaxReportView() {
   const { allTransactions, recordedSales, selectedYear, setSelectedYear, selectedMethod, setSelectedMethod, availableYears } = useAppState();
 
-  const result = useMemo(() => calculate(allTransactions, selectedMethod), [allTransactions, selectedMethod]);
+  const result = useMemo(() => calculate(allTransactions, selectedMethod, recordedSales), [allTransactions, selectedMethod, recordedSales]);
 
-  // For Specific ID: use stored recordedSales (which have correct lot choices) instead of
-  // recalculated sales (which fall back to FIFO when no lot selections are provided).
+  // Filter sales to selected year — calculate() now handles Specific ID natively
+  // (recorded lot elections are respected during engine replay, no overlay needed)
   const salesForYear = useMemo(() => {
-    const calcSales = result.sales.filter((s) => new Date(s.saleDate).getFullYear() === selectedYear);
+    return result.sales.filter((s) => new Date(s.saleDate).getFullYear() === selectedYear);
+  }, [result.sales, selectedYear]);
 
-    if (selectedMethod !== AccountingMethod.SpecificID || recordedSales.length === 0) {
-      return calcSales;
-    }
-
-    // Build a lookup of recorded Specific ID sales by date+amount key
-    const recordedMap = new Map<string, typeof recordedSales[0]>();
-    for (const rs of recordedSales) {
-      if (rs.method === AccountingMethod.SpecificID && new Date(rs.saleDate).getFullYear() === selectedYear) {
-        const key = `${rs.saleDate}|${rs.amountSold.toFixed(8)}`;
-        recordedMap.set(key, rs);
-      }
-    }
-
-    // Replace calculated sales with recorded Specific ID sales where they match
-    return calcSales.map((cs) => {
-      const key = `${cs.saleDate}|${cs.amountSold.toFixed(8)}`;
-      return recordedMap.get(key) ?? cs;
-    });
-  }, [result.sales, recordedSales, selectedYear, selectedMethod]);
-
-  const totalProceeds = salesForYear.reduce((a, s) => a + s.totalProceeds, 0);
-  const totalCostBasis = salesForYear.reduce((a, s) => a + s.costBasis, 0);
-  const totalGL = salesForYear.reduce((a, s) => a + s.gainLoss, 0);
+  // Exclude donations from all summary totals and ST/LT breakdown:
+  // - Donations have zero proceeds/gainLoss but retain costBasis (proceeds - costBasis ≠ totalGL)
+  // - Donations have salePricePerBTC=0 which would produce phantom losses in the lot-detail formula
+  const taxableSales = salesForYear.filter((s) => !s.isDonation);
+  const totalProceeds = taxableSales.reduce((a, s) => a + s.totalProceeds, 0);
+  const totalCostBasis = taxableSales.reduce((a, s) => a + s.costBasis, 0);
+  const totalGL = taxableSales.reduce((a, s) => a + s.gainLoss, 0);
 
   // Compute ST/LT gain/loss from lot details, not sale-level isLongTerm (handles mixed-term sales)
-  const stGL = salesForYear.reduce((a, s) => {
+  const stGL = taxableSales.reduce((a, s) => {
     return a + s.lotDetails.filter((d) => !d.isLongTerm).reduce((sum, d) => sum + (d.amountBTC * s.salePricePerBTC - d.totalCost), 0);
   }, 0);
-  const ltGL = salesForYear.reduce((a, s) => {
+  const ltGL = taxableSales.reduce((a, s) => {
     return a + s.lotDetails.filter((d) => d.isLongTerm).reduce((sum, d) => sum + (d.amountBTC * s.salePricePerBTC - d.totalCost), 0);
   }, 0);
+
+  // Donation summary for Form 8283 reference card
+  const donationSummary = useMemo(() => {
+    const donationsForYear = salesForYear.filter((s) => s.isDonation);
+    return donationsForYear.length > 0 ? buildDonationSummary(donationsForYear, allTransactions, selectedYear) : [];
+  }, [salesForYear, allTransactions, selectedYear]);
 
   const [exportToast, setExportToast] = useState<string | null>(null);
 
@@ -138,6 +129,95 @@ export function TaxReportView() {
             );
           })()}
 
+          {/* Charitable Donations — Form 8283 Reference */}
+          {donationSummary.length > 0 && (
+            <div className="card mb-6 border-l-4 border-l-purple-500">
+              <h3 className="font-semibold mb-1">Charitable Donations — Form 8283 Reference</h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Noncash charitable contributions are reported on IRS Form 8283 (Schedule A), not Form 8949.
+                This data is for your records when preparing that form.
+              </p>
+
+              {/* Donation summary stats */}
+              <div className="grid grid-cols-4 gap-4 mb-4">
+                <div>
+                  <div className="text-xs text-gray-500">Total Donated</div>
+                  <div className="font-semibold tabular-nums">{formatBTC(donationSummary.reduce((a, d) => a + d.amountBTC, 0))} BTC</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">Fair Market Value</div>
+                  <div className="font-semibold tabular-nums text-purple-600">{formatUSD(donationSummary.reduce((a, d) => a + d.totalFMV, 0))}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">Cost Basis</div>
+                  <div className="font-semibold tabular-nums">{formatUSD(donationSummary.reduce((a, d) => a + d.costBasis, 0))}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">Donations</div>
+                  <div className="font-semibold">{donationSummary.length}</div>
+                </div>
+              </div>
+
+              {/* Per-donation detail */}
+              {donationSummary.map((d, idx) => (
+                <details key={idx} className="mb-2">
+                  <summary className="flex items-center gap-3 py-2 px-3 rounded cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800">
+                    <span className="font-medium">Donation #{idx + 1}</span>
+                    <span className="text-gray-500 text-sm">{formatDate(d.date)}</span>
+                    <span className="flex-1" />
+                    <span className="tabular-nums text-sm">{formatBTC(d.amountBTC)} BTC</span>
+                    {d.fmvPerBTC > 0 && (
+                      <span className="tabular-nums text-sm text-purple-600">FMV {formatUSD(d.totalFMV)}</span>
+                    )}
+                    <span className={`badge ${d.holdingPeriod === "Long-term" ? "badge-green" : d.holdingPeriod === "Mixed" ? "badge-blue" : "badge-orange"}`}>
+                      {d.holdingPeriod}
+                    </span>
+                  </summary>
+                  <div className="ml-8 mt-1 text-xs space-y-1">
+                    <div className="flex gap-4 text-gray-600 dark:text-gray-400">
+                      <span>Exchange: {d.exchange}</span>
+                      {d.notes && <span>Notes: {d.notes}</span>}
+                    </div>
+                    <div className="flex gap-4 text-gray-600 dark:text-gray-400">
+                      <span>Cost Basis: {formatUSD(d.costBasis)}</span>
+                      {d.fmvPerBTC > 0 && <span>FMV/BTC: {formatUSD(d.fmvPerBTC)}</span>}
+                    </div>
+                    {d.lotDetails.map((lot, li) => (
+                      <div key={li} className="flex gap-4 py-0.5 text-gray-500">
+                        <span>Acquired {formatDate(lot.purchaseDate)}</span>
+                        <span className="tabular-nums">{formatBTC(lot.amountBTC)} BTC</span>
+                        <span className="tabular-nums">basis {formatUSD(lot.costBasis)}</span>
+                        <span className={lot.isLongTerm ? "text-green-600" : "text-orange-500"}>{lot.isLongTerm ? "Long" : "Short"}</span>
+                      </div>
+                    ))}
+                    <div className="text-xs text-gray-400 mt-1">
+                      {d.holdingPeriod === "Long-term"
+                        ? "Held > 1 year — deductible at FMV (IRC §170(b)(1)(C)), limited to 30% of AGI"
+                        : d.holdingPeriod === "Short-term"
+                          ? "Held ≤ 1 year — deductible at cost basis only (IRC §170(e)(1)(A))"
+                          : "Mixed holding periods — long-term portion deductible at FMV, short-term at cost basis"
+                      }
+                    </div>
+                  </div>
+                </details>
+              ))}
+
+              {/* Form 8283 Export */}
+              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  className="btn-secondary text-sm"
+                  onClick={() => downloadCSV(
+                    exportForm8283CSV(donationSummary, selectedYear),
+                    `form_8283_donations_${selectedYear}.csv`
+                  )}
+                >
+                  📋 Export Form 8283 CSV
+                </button>
+                <span className="text-xs text-gray-400 ml-3">Reference data for IRS Form 8283 preparation</span>
+              </div>
+            </div>
+          )}
+
           {/* Export */}
           <div className="card mb-6">
             <h3 className="font-semibold mb-3">Export Tax Documents</h3>
@@ -171,18 +251,27 @@ export function TaxReportView() {
 
           {/* Sales List */}
           <div className="card">
-            <h3 className="font-semibold mb-3">Sales ({salesForYear.length})</h3>
+            <h3 className="font-semibold mb-3">
+              Dispositions ({salesForYear.length})
+              {salesForYear.some((s) => s.isDonation) && (
+                <span className="text-sm font-normal text-gray-500 ml-2">
+                  {salesForYear.filter((s) => !s.isDonation).length} sales, {salesForYear.filter((s) => s.isDonation).length} donations
+                </span>
+              )}
+            </h3>
             {salesForYear.map((sale, idx) => (
               <details key={sale.id} className="mb-2">
                 <summary className="flex items-center gap-3 py-2 px-3 rounded cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800">
-                  <span className="font-medium">Sale #{idx + 1}</span>
+                  <span className="font-medium">{sale.isDonation ? "Donation" : "Sale"} #{idx + 1}</span>
                   <span className="text-gray-500 text-sm">{formatDate(sale.saleDate)}</span>
                   <span className="flex-1" />
                   <span className="tabular-nums text-sm">{formatBTC(sale.amountSold)} BTC</span>
                   <span className={`font-medium tabular-nums ${sale.gainLoss >= 0 ? "text-green-600" : "text-red-500"}`}>
                     {sale.gainLoss >= 0 ? "+" : ""}{formatUSD(sale.gainLoss)}
                   </span>
-                  {sale.isMixedTerm ? (
+                  {sale.isDonation ? (
+                    <span className="badge" style={{ background: "rgba(168,85,247,0.15)", color: "#a855f7" }}>Donation</span>
+                  ) : sale.isMixedTerm ? (
                     <span className="badge badge-blue">Mixed</span>
                   ) : (
                     <span className={`badge ${sale.isLongTerm ? "badge-green" : "badge-orange"}`}>

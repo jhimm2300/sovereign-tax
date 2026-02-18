@@ -44,6 +44,7 @@ export function TransactionsView() {
     buys: transactions.filter((t) => t.transactionType === TransactionType.Buy).length,
     sells: transactions.filter((t) => t.transactionType === TransactionType.Sell).length,
     transfers: transactions.filter((t) => t.transactionType === TransactionType.TransferIn || t.transactionType === TransactionType.TransferOut).length,
+    donations: transactions.filter((t) => t.transactionType === TransactionType.Donation).length,
   }), [transactions]);
 
   const toggleSort = (field: keyof Transaction) => {
@@ -91,6 +92,7 @@ export function TransactionsView() {
         <span className="text-xs"><span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-1" />{counts.buys} Buys</span>
         <span className="text-xs"><span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-1" />{counts.sells} Sells</span>
         <span className="text-xs"><span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-1" />{counts.transfers} Transfers</span>
+        {counts.donations > 0 && <span className="text-xs"><span className="inline-block w-2 h-2 rounded-full bg-purple-500 mr-1" />{counts.donations} Donations</span>}
       </div>
 
       {/* Table (scrollable with sticky header) */}
@@ -204,7 +206,9 @@ function EditModal({ txn, onSave, onClose }: { txn: Transaction; onSave: (update
     const amount = Number(amountStr);
     if (!amount || amount <= 0) { setError("Enter a valid BTC amount"); return; }
     const price = Number(priceStr);
-    if (!price || price <= 0) { setError("Enter a valid price"); return; }
+    // Transfers can have price=0 (non-taxable movements); donations require FMV for deduction records
+    const isTransfer = type === TransactionType.TransferIn || type === TransactionType.TransferOut;
+    if (!isTransfer && (!price || price <= 0)) { setError(type === TransactionType.Donation ? "Enter the Fair Market Value (FMV) per BTC on the date of donation" : "Enter a valid price"); return; }
     let total = Number(totalStr);
     if (!total || total <= 0) total = amount * price;
     const fee = Number(feeStr) || 0;
@@ -343,6 +347,7 @@ function typeColor(type: TransactionType): string {
     case TransactionType.Sell: return "text-red-500";
     case TransactionType.TransferIn: return "text-blue-500";
     case TransactionType.TransferOut: return "text-orange-500";
+    case TransactionType.Donation: return "text-purple-500";
   }
 }
 
@@ -352,5 +357,6 @@ function typeIcon(type: TransactionType): string {
     case TransactionType.Sell: return "↑";
     case TransactionType.TransferIn: return "→";
     case TransactionType.TransferOut: return "←";
+    case TransactionType.Donation: return "♥";
   }
 }

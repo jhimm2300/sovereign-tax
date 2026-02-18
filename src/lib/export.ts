@@ -27,6 +27,8 @@ export function exportForm8949CSV(
   year: number,
   method: AccountingMethod
 ): string {
+  // Exclude donations — they are not capital gain/loss events (IRC §170)
+  sales = sales.filter((s) => !s.isDonation);
   const lines: string[] = [];
 
   // Title
@@ -123,6 +125,8 @@ export function exportForm8949CSV(
 
 /** Export legacy CSV */
 export function exportLegacyCSV(sales: SaleRecord[]): string {
+  // Exclude donations — they are not capital gain/loss events
+  sales = sales.filter((s) => !s.isDonation);
   const lines = [
     "Date Sold,Date Acquired,Description,Proceeds,Cost Basis,Fee,Gain/Loss,Holding Period (days),Term,Exchange",
   ];
@@ -182,6 +186,8 @@ export function exportIncomeCSV(transactions: Transaction[], year: number): stri
 
 /** Export TurboTax TXF format */
 export function exportTurboTaxTXF(sales: SaleRecord[], year: number): string {
+  // Exclude donations — they are not capital gain/loss events
+  sales = sales.filter((s) => !s.isDonation);
   const lines: string[] = [];
   lines.push("V042");
   lines.push("ASovereign Tax");
@@ -211,6 +217,8 @@ export function exportTurboTaxTXF(sales: SaleRecord[], year: number): string {
 
 /** Export TurboTax CSV format */
 export function exportTurboTaxCSV(sales: SaleRecord[], year: number): string {
+  // Exclude donations — they are not capital gain/loss events
+  sales = sales.filter((s) => !s.isDonation);
   const lines = [
     "Currency Name,Purchase Date,Cost Basis,Date Sold,Proceeds",
   ];
@@ -223,6 +231,149 @@ export function exportTurboTaxCSV(sales: SaleRecord[], year: number): string {
       );
     }
   }
+
+  return lines.join("\n");
+}
+
+/** Data structure for donation summary used by TaxReportView */
+export interface DonationSummaryItem {
+  date: string;
+  amountBTC: number;
+  fmvPerBTC: number;
+  totalFMV: number;
+  costBasis: number;
+  holdingPeriod: string; // "Short-term" or "Long-term" or "Mixed"
+  exchange: string;
+  notes: string;
+  lotDetails: { purchaseDate: string; amountBTC: number; costBasis: number; isLongTerm: boolean }[];
+}
+
+/**
+ * Build donation summary from donation SaleRecords.
+ * FMV is stored directly on the SaleRecord (donationFmvPerBTC/donationFmvTotal),
+ * with fallback to raw transaction matching for legacy data.
+ */
+export function buildDonationSummary(
+  donationSales: SaleRecord[],
+  allTransactions: Transaction[],
+  year: number
+): DonationSummaryItem[] {
+  // Fallback: raw donation transactions for legacy data that lacks FMV on SaleRecord
+  const rawDonations = allTransactions.filter(
+    (t) => t.transactionType === TransactionType.Donation && new Date(t.date).getFullYear() === year
+  );
+  const usedIds = new Set<string>();
+
+  return donationSales.map((sale) => {
+    // Prefer FMV stored directly on the SaleRecord (set during cost-basis calculation)
+    let fmvPerBTC = sale.donationFmvPerBTC ?? 0;
+    let totalFMV = sale.donationFmvTotal ?? 0;
+    let exchange = sale.lotDetails[0]?.exchange ?? "Unknown";
+    let notes = "";
+
+    // Fallback: match to raw transaction for legacy data or if FMV not on SaleRecord
+    if (!fmvPerBTC) {
+      const rawMatch = rawDonations.find(
+        (t) => !usedIds.has(t.id) && t.date === sale.saleDate && Math.abs(t.amountBTC - sale.amountSold) < 0.000000005
+      );
+      if (rawMatch) {
+        usedIds.add(rawMatch.id);
+        fmvPerBTC = rawMatch.pricePerBTC;
+        totalFMV = rawMatch.totalUSD || sale.amountSold * fmvPerBTC;
+        exchange = rawMatch.exchange;
+        notes = rawMatch.notes;
+      }
+    } else {
+      // Still try to get exchange/notes from raw transaction (match by date only for flexibility)
+      const rawMatch = rawDonations.find(
+        (t) => !usedIds.has(t.id) && t.date === sale.saleDate
+      );
+      if (rawMatch) {
+        usedIds.add(rawMatch.id);
+        exchange = rawMatch.exchange;
+        notes = rawMatch.notes;
+      }
+    }
+
+    const hasShort = sale.lotDetails.some((d) => !d.isLongTerm);
+    const hasLong = sale.lotDetails.some((d) => d.isLongTerm);
+    const holdingPeriod = hasShort && hasLong ? "Mixed" : hasLong ? "Long-term" : "Short-term";
+
+    return {
+      date: sale.saleDate,
+      amountBTC: sale.amountSold,
+      fmvPerBTC,
+      totalFMV,
+      costBasis: sale.costBasis,
+      holdingPeriod,
+      exchange,
+      notes,
+      lotDetails: sale.lotDetails.map((d) => ({
+        purchaseDate: d.purchaseDate,
+        amountBTC: d.amountBTC,
+        costBasis: d.totalCost,
+        isLongTerm: d.isLongTerm,
+      })),
+    };
+  });
+}
+
+/** Export Form 8283 CSV — Noncash Charitable Contributions (for donation records) */
+export function exportForm8283CSV(
+  donationSummary: DonationSummaryItem[],
+  year: number
+): string {
+  const lines: string[] = [];
+
+  lines.push("IRS Form 8283 — Noncash Charitable Contributions (Reference Data)");
+  lines.push(`Tax Year: ${year}`);
+  lines.push(`Generated: ${formatDate(new Date().toISOString())}`);
+  lines.push("");
+  lines.push("IMPORTANT: This is reference data for preparing Form 8283. Donations of cryptocurrency");
+  lines.push("are reported on Form 8283 (Schedule A), NOT on Form 8949. Consult a tax professional.");
+  lines.push("");
+
+  // Section A header (for donations ≤ $5,000 — most common)
+  lines.push("SECTION A — Donated Property of $5,000 or Less");
+  lines.push("Description of Property,Date Acquired,Date Donated,Donor's Cost Basis,Fair Market Value,FMV Method,Holding Period,Exchange/Wallet,Notes");
+
+  let totalFMV = 0;
+  let totalCostBasis = 0;
+  let totalBTC = 0;
+
+  for (const donation of donationSummary) {
+    // If a donation drew from multiple lots, show per-lot detail
+    for (const lot of donation.lotDetails) {
+      const lotFMV = lot.amountBTC * donation.fmvPerBTC;
+      lines.push(
+        [
+          `${formatBTC(lot.amountBTC)} BTC`,
+          formatDate(lot.purchaseDate),
+          formatDate(donation.date),
+          formatCSVDecimal(lot.costBasis),
+          formatCSVDecimal(lotFMV),
+          donation.fmvPerBTC > 0 ? "CoinGecko / Exchange Rate" : "Not provided",
+          lot.isLongTerm ? "Long-term" : "Short-term",
+          donation.exchange,
+          `"${(donation.notes || "").replace(/"/g, '""')}"`,
+        ].join(",")
+      );
+    }
+    totalFMV += donation.totalFMV;
+    totalCostBasis += donation.costBasis;
+    totalBTC += donation.amountBTC;
+  }
+
+  lines.push("");
+  lines.push(`TOTALS,,,${formatCSVDecimal(totalCostBasis)},${formatCSVDecimal(totalFMV)}`);
+  lines.push(`Total BTC Donated: ${formatBTC(totalBTC)}`);
+  lines.push("");
+  lines.push("NOTES:");
+  lines.push("- Donations of appreciated property held > 1 year: deductible at FMV (IRC §170(b)(1)(C))");
+  lines.push("- Donations of appreciated property held ≤ 1 year: deductible at cost basis (IRC §170(e)(1)(A))");
+  lines.push("- Donations exceeding $500 require Form 8283 Section A");
+  lines.push("- Donations exceeding $5,000 require a qualified appraisal (Form 8283 Section B)");
+  lines.push("- Deduction limited to 30% of AGI for appreciated property (60% for cost-basis-limited property)");
 
   return lines.join("\n");
 }

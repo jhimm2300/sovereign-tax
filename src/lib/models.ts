@@ -28,6 +28,7 @@ export interface Lot {
 
 export interface LotDetail {
   id: string;
+  lotId?: string; // Source lot ID (= Buy transaction ID) for Specific ID matching across calculate() runs
   purchaseDate: string;
   amountBTC: number;
   costBasisPerBTC: number;
@@ -52,6 +53,9 @@ export interface SaleRecord {
   isLongTerm: boolean;
   isMixedTerm: boolean; // true when sale spans both short-term and long-term lots
   method: AccountingMethod;
+  isDonation?: boolean; // true for charitable donations — excluded from Form 8949
+  donationFmvPerBTC?: number; // Original FMV per BTC from the donation transaction
+  donationFmvTotal?: number; // Original total FMV (amount × FMV) from the donation transaction
 }
 
 export interface CalculationResult {
@@ -103,9 +107,9 @@ export function createTransaction(params: Omit<Transaction, "id">): Transaction 
   };
 }
 
-export function createLot(params: Omit<Lot, "id" | "remainingBTC"> & { remainingBTC?: number }): Lot {
+export function createLot(params: Omit<Lot, "id" | "remainingBTC"> & { id?: string; remainingBTC?: number }): Lot {
   return {
-    id: crypto.randomUUID(),
+    id: params.id ?? crypto.randomUUID(),
     ...params,
     remainingBTC: params.remainingBTC ?? params.amountBTC,
   };

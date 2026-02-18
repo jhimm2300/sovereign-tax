@@ -29,6 +29,8 @@ export function exportForm8949PDF(
   year: number,
   method: AccountingMethod
 ): void {
+  // Exclude donations — they are not capital gain/loss events (IRC §170)
+  sales = sales.filter((s) => !s.isDonation);
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "letter" });
   const pageWidth = doc.internal.pageSize.getWidth();
 

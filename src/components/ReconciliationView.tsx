@@ -99,7 +99,7 @@ export function ReconciliationView() {
             <p><strong>Flagged matches:</strong> Transfers with an unusually high implied miner fee (above 0.0005 BTC) are flagged for your review. You can approve or reject them.</p>
             <p><strong>Manual matching:</strong> If a transfer wasn't auto-matched, you can select one outgoing and one incoming transfer to link them manually.</p>
             <p><strong>Unmatched transfers:</strong> Withdrawals to your own cold storage wallet will appear as unmatched — this is normal and does not indicate a problem.</p>
-            <p><strong>Exchange balances:</strong> Net BTC balance per exchange is computed from all buys, sells, and transfers. A negative balance may indicate missing import data.</p>
+            <p><strong>Exchange balances:</strong> Net BTC balance per exchange is computed from all buys, sells, transfers, and donations. A negative balance may indicate missing import data.</p>
           </>
         }
       />
