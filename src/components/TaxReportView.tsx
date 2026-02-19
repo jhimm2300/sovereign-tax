@@ -68,7 +68,7 @@ export function TaxReportView() {
         expandedContent={
           <>
             <p><strong>Short-term vs. long-term:</strong> Assets held one year or less are short-term (taxed as ordinary income). Assets held more than one year are long-term (lower capital gains rate).</p>
-            <p><strong>Accounting methods:</strong> FIFO sells oldest lots first, LIFO sells newest, HIFO sells highest-cost. Specific ID lets you choose individual lots.</p>
+            <p><strong>Accounting methods:</strong> FIFO (First In, First Out) sells oldest lots first — this is the IRS default. Specific Identification lets you choose exactly which lots to sell, but must be elected before the disposal.</p>
             <p><strong>Export options:</strong> Form 8949 CSV for manual filing, TurboTax CSV/TXF for direct import, or a PDF summary for your records.</p>
           </>
         }

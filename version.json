@@ -1,8 +1,8 @@
 {
-  "latest": "1.3.2",
+  "latest": "1.3.3",
   "url": "https://sovereigntax.io",
   "releaseDate": "2026-02-19",
-  "notes": "Cost basis engine refactor: native donation disposition handling, cleaner processSale() architecture",
+  "notes": "IRS compliance: remove LIFO/HIFO (only FIFO + Specific ID permitted). Add method selector and wallet column to lot picker.",
   "downloads": {
     "macos": "https://sovereigntax.io/downloads/SovereignTax-macOS.dmg",
     "windows": "https://sovereigntax.io/downloads/SovereignTax-Windows.exe",

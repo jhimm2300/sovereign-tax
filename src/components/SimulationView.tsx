@@ -93,7 +93,8 @@ export function SimulationView() {
           <div>
             <label className="text-xs text-gray-500 block mb-1">Method</label>
             <select className="select" value={method} onChange={(e) => { setMethod(e.target.value as AccountingMethod); setResult(null); setShowLotPicker(false); }}>
-              {Object.values(AccountingMethod).map((m) => <option key={m} value={m}>{m}</option>)}
+              <option value={AccountingMethod.FIFO}>FIFO</option>
+              <option value={AccountingMethod.SpecificID}>Specific ID</option>
             </select>
           </div>
           {availableWallets.length > 1 && (

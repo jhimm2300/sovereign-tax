@@ -160,13 +160,14 @@ export function ImportView() {
 
       {/* Exchange name */}
       <div className="flex items-center gap-3 mb-6">
-        <span className="text-gray-500">Exchange Name (optional):</span>
+        <span className="text-gray-500">Exchange Name:</span>
         <input
           className="input w-64"
           placeholder="e.g., Coinbase, Swan, Strike"
           value={exchangeName}
           onChange={(e) => setExchangeName(e.target.value)}
         />
+        <span className="text-xs text-gray-400">Used as default — overridden if your CSV has an Exchange column</span>
       </div>
 
       {/* Column Mapping */}

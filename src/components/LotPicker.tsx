@@ -79,9 +79,10 @@ export function LotPicker({ lots, targetAmount, saleDate, onConfirm, onCancel }:
         </div>
       </div>
 
-      <div className="grid grid-cols-[40px_1fr_1fr_1fr_1fr_1fr_120px] gap-2 text-xs font-semibold text-gray-500 pb-2 border-b border-gray-200 dark:border-gray-700">
+      <div className="grid grid-cols-[40px_1fr_1fr_1fr_1fr_1fr_1fr_120px] gap-2 text-xs font-semibold text-gray-500 pb-2 border-b border-gray-200 dark:border-gray-700">
         <div></div>
         <div>Date</div>
+        <div>Wallet</div>
         <div className="text-right">Available</div>
         <div className="text-right">Cost/BTC</div>
         <div className="text-right">Days Held</div>
@@ -96,7 +97,7 @@ export function LotPicker({ lots, targetAmount, saleDate, onConfirm, onCancel }:
           const daysHeld = daysBetween(lot.purchaseDate, referenceDate);
           const isLongTerm = isMoreThanOneYear(lot.purchaseDate, referenceDate);
           return (
-            <div key={lot.id} className={`grid grid-cols-[40px_1fr_1fr_1fr_1fr_1fr_120px] gap-2 py-2 text-sm border-b border-gray-100 dark:border-gray-800 ${isSelected ? "bg-blue-50 dark:bg-blue-900/10" : ""}`}>
+            <div key={lot.id} className={`grid grid-cols-[40px_1fr_1fr_1fr_1fr_1fr_1fr_120px] gap-2 py-2 text-sm border-b border-gray-100 dark:border-gray-800 ${isSelected ? "bg-blue-50 dark:bg-blue-900/10" : ""}`}>
               <div>
                 <input
                   type="checkbox"
@@ -105,6 +106,7 @@ export function LotPicker({ lots, targetAmount, saleDate, onConfirm, onCancel }:
                 />
               </div>
               <div>{formatDate(lot.purchaseDate)}</div>
+              <div className="text-xs text-gray-500 truncate" title={lot.wallet || lot.exchange}>{lot.wallet || lot.exchange}</div>
               <div className="text-right tabular-nums">{formatBTC(lot.remainingBTC)}</div>
               <div className="text-right tabular-nums">{formatUSD(lot.pricePerBTC)}</div>
               <div className="text-right tabular-nums">{daysHeld}</div>

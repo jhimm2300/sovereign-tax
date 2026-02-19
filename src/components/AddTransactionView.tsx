@@ -29,17 +29,18 @@ export function AddTransactionView() {
   const [pendingTxn, setPendingTxn] = useState<Transaction | null>(null);
   const [duplicateMatches, setDuplicateMatches] = useState<typeof state.transactions>([]);
 
-  // Donation lot preview state
-  const [donationMethod, setDonationMethod] = useState(AccountingMethod.FIFO);
-  const [donationPreview, setDonationPreview] = useState<SaleRecord | null>(null);
+  // Disposition (Sell/Donation) lot preview state
+  const [dispositionMethod, setDispositionMethod] = useState(AccountingMethod.FIFO);
+  const [dispositionPreview, setDispositionPreview] = useState<SaleRecord | null>(null);
   const [showLotPicker, setShowLotPicker] = useState(false);
   const [lotSelections, setLotSelections] = useState<LotSelection[] | null>(null);
 
-  // Current lots for donation preview (only computed when needed)
+  // Current lots for disposition preview (Sell or Donation)
+  const isDisposition = type === TransactionType.Sell || type === TransactionType.Donation;
   const currentLots = useMemo(() => {
-    if (type !== TransactionType.Donation) return [];
-    return calculate(state.allTransactions, donationMethod, state.recordedSales).lots;
-  }, [state.allTransactions, donationMethod, type, state.recordedSales]);
+    if (!isDisposition) return [];
+    return calculate(state.allTransactions, dispositionMethod, state.recordedSales).lots;
+  }, [state.allTransactions, dispositionMethod, isDisposition, state.recordedSales]);
 
   /** Auto-fetch historical FMV for income transactions */
   const fetchFMV = useCallback(async () => {
@@ -62,16 +63,16 @@ export function AddTransactionView() {
     }
   }, [date, amountStr, state]);
 
-  const isDonationSpecificID = type === TransactionType.Donation && donationMethod === AccountingMethod.SpecificID;
+  const isSpecificID = isDisposition && dispositionMethod === AccountingMethod.SpecificID;
 
-  /** Preview which lots will be consumed by this donation */
-  const previewDonationLots = () => {
+  /** Preview which lots will be consumed by this sell or donation */
+  const previewDispositionLots = () => {
     setError(null);
-    setDonationPreview(null);
+    setDispositionPreview(null);
     const amount = Number(amountStr);
     if (!amount || amount <= 0) { setError("Enter a valid BTC amount to preview"); return; }
 
-    if (isDonationSpecificID) {
+    if (isSpecificID) {
       // Show lot picker for manual selection
       setShowLotPicker(true);
       setLotSelections(null);
@@ -80,52 +81,66 @@ export function AddTransactionView() {
 
     const walletFilter = wallet || undefined;
     const dateISO = new Date(date + "T12:00:00").toISOString();
-    // Simulate with price=0 since donations have no proceeds — we just need the lot details
-    const sim = simulateSale(amount, 0, currentLots, donationMethod, undefined, walletFilter, dateISO);
-    if (!sim) { setError("Not enough BTC in available lots for this donation amount"); return; }
-    setDonationPreview(sim);
+    const isDonation = type === TransactionType.Donation;
+    const price = isDonation ? 0 : (useLive ? state.priceState.currentPrice! : Number(priceStr));
+    const sim = simulateSale(amount, price, currentLots, dispositionMethod, undefined, walletFilter, dateISO);
+    if (!sim) { setError(`Not enough BTC in available lots for this ${isDonation ? "donation" : "sell"} amount`); return; }
+    setDispositionPreview(sim);
   };
 
-  /** Handle lot picker confirmation for Specific ID donations */
-  const handleDonationLotConfirm = (selections: LotSelection[]) => {
+  /** Handle lot picker confirmation for Specific ID dispositions */
+  const handleDispositionLotConfirm = (selections: LotSelection[]) => {
     setShowLotPicker(false);
     setLotSelections(selections);
     const amount = Number(amountStr);
     const walletFilter = wallet || undefined;
     const dateISO = new Date(date + "T12:00:00").toISOString();
-    const sim = simulateSale(amount, 0, currentLots, AccountingMethod.SpecificID, selections, walletFilter, dateISO);
+    const isDonation = type === TransactionType.Donation;
+    const price = isDonation ? 0 : (useLive ? state.priceState.currentPrice! : Number(priceStr));
+    const sim = simulateSale(amount, price, currentLots, AccountingMethod.SpecificID, selections, walletFilter, dateISO);
     if (!sim) { setError("Not enough BTC from selected lots"); return; }
-    setDonationPreview(sim);
+    setDispositionPreview(sim);
   };
 
-  const handleDonationLotCancel = () => {
+  const handleDispositionLotCancel = () => {
     setShowLotPicker(false);
   };
 
   const commitTransaction = async (txn: Transaction) => {
     await state.addTransaction(txn);
 
-    // For Specific ID donations, save the SaleRecord as a permanent lot election
-    if (txn.transactionType === TransactionType.Donation && donationMethod === AccountingMethod.SpecificID && donationPreview && lotSelections) {
-      const price = useLive ? state.priceState.currentPrice! : Number(priceStr);
-      const saleRecord: SaleRecord = {
-        ...donationPreview,
-        id: crypto.randomUUID(),
-        saleDate: txn.date,
-        isDonation: true,
-        donationFmvPerBTC: price,
-        donationFmvTotal: donationPreview.amountSold * price,
-        method: AccountingMethod.SpecificID,
-        sourceTransactionId: txn.id,
-      };
-      await state.recordSale(saleRecord);
+    // For Specific ID dispositions (Sell or Donation), save the SaleRecord as a permanent lot election
+    if (dispositionMethod === AccountingMethod.SpecificID && dispositionPreview && lotSelections) {
+      if (txn.transactionType === TransactionType.Donation) {
+        const price = useLive ? state.priceState.currentPrice! : Number(priceStr);
+        const saleRecord: SaleRecord = {
+          ...dispositionPreview,
+          id: crypto.randomUUID(),
+          saleDate: txn.date,
+          isDonation: true,
+          donationFmvPerBTC: price,
+          donationFmvTotal: dispositionPreview.amountSold * price,
+          method: AccountingMethod.SpecificID,
+          sourceTransactionId: txn.id,
+        };
+        await state.recordSale(saleRecord);
+      } else if (txn.transactionType === TransactionType.Sell) {
+        const saleRecord: SaleRecord = {
+          ...dispositionPreview,
+          id: crypto.randomUUID(),
+          saleDate: txn.date,
+          method: AccountingMethod.SpecificID,
+          sourceTransactionId: txn.id,
+        };
+        await state.recordSale(saleRecord);
+      }
     }
 
     setSuccess(`${TransactionTypeDisplayNames[txn.transactionType]} of ${formatBTC(txn.amountBTC)} BTC added`);
     setAmountStr(""); setPriceStr(""); setTotalStr(""); setFeeStr(""); setWallet(""); setNotes(""); setIncomeType("");
     setPendingTxn(null);
     setDuplicateMatches([]);
-    setDonationPreview(null);
+    setDispositionPreview(null);
     setLotSelections(null);
     setShowLotPicker(false);
   };
@@ -189,7 +204,7 @@ export function AddTransactionView() {
           <span className="w-24 text-right text-gray-500">Type:</span>
           <div className="segmented">
             {Object.values(TransactionType).map((t) => (
-              <button key={t} className={`segmented-btn ${type === t ? "active" : ""}`} onClick={() => { setType(t); setDonationPreview(null); setLotSelections(null); setShowLotPicker(false); }}>
+              <button key={t} className={`segmented-btn ${type === t ? "active" : ""}`} onClick={() => { setType(t); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); }}>
                 {TransactionTypeDisplayNames[t]}
               </button>
             ))}
@@ -210,31 +225,31 @@ export function AddTransactionView() {
           </div>
         )}
 
-        {/* Donation Method Selector */}
-        {type === TransactionType.Donation && (
+        {/* Method Selector (Sell + Donation) */}
+        {isDisposition && (
           <div className="flex items-center gap-4">
             <span className="w-24 text-right text-gray-500">Method:</span>
             <div className="segmented">
-              {[AccountingMethod.FIFO, AccountingMethod.LIFO, AccountingMethod.HIFO, AccountingMethod.SpecificID].map((m) => (
-                <button key={m} className={`segmented-btn ${donationMethod === m ? "active" : ""}`} onClick={() => { setDonationMethod(m); setDonationPreview(null); setShowLotPicker(false); setLotSelections(null); }}>
+              {[AccountingMethod.FIFO, AccountingMethod.SpecificID].map((m) => (
+                <button key={m} className={`segmented-btn ${dispositionMethod === m ? "active" : ""}`} onClick={() => { setDispositionMethod(m); setDispositionPreview(null); setShowLotPicker(false); setLotSelections(null); }}>
                   {m}
                 </button>
               ))}
             </div>
-            <span className="text-xs text-gray-400">{isDonationSpecificID ? "Choose exactly which lots to donate" : "Controls which lots are consumed"}</span>
+            <span className="text-xs text-gray-400">{isSpecificID ? "Choose exactly which lots to dispose" : "FIFO — IRS default, sells oldest lots first"}</span>
           </div>
         )}
 
         {/* Date */}
         <div className="flex items-center gap-4">
           <span className="w-24 text-right text-gray-500">Date:</span>
-          <input type="date" className="input w-48" value={date} onChange={(e) => { setDate(e.target.value); setDonationPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
+          <input type="date" className="input w-48" value={date} onChange={(e) => { setDate(e.target.value); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
         </div>
 
         {/* Amount */}
         <div className="flex items-center gap-4">
           <span className="w-24 text-right text-gray-500">BTC Amount:</span>
-          <input className="input w-48" placeholder="0.00000000" value={amountStr} onChange={(e) => { setAmountStr(e.target.value); setDonationPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
+          <input className="input w-48" placeholder="0.00000000" value={amountStr} onChange={(e) => { setAmountStr(e.target.value); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
         </div>
 
         {/* Price */}
@@ -283,13 +298,13 @@ export function AddTransactionView() {
         {/* Exchange */}
         <div className="flex items-center gap-4">
           <span className="w-24 text-right text-gray-500">Exchange:</span>
-          <input className="input w-48" placeholder="e.g., Coinbase" value={exchange} onChange={(e) => { setExchange(e.target.value); setDonationPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
+          <input className="input w-48" placeholder="e.g., Coinbase" value={exchange} onChange={(e) => { setExchange(e.target.value); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
         </div>
 
         {/* Wallet */}
         <div className="flex items-center gap-4">
           <span className="w-24 text-right text-gray-500">Wallet:</span>
-          <input className="input w-48" placeholder="Defaults to exchange" value={wallet} onChange={(e) => { setWallet(e.target.value); setDonationPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
+          <input className="input w-48" placeholder="Defaults to exchange" value={wallet} onChange={(e) => { setWallet(e.target.value); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
           <span className="text-xs text-gray-400">(optional — for per-wallet cost basis tracking)</span>
         </div>
 
@@ -303,20 +318,20 @@ export function AddTransactionView() {
         <div className="flex gap-3 pt-2">
           <button
             className="btn-primary"
-            disabled={isDonationSpecificID && !lotSelections}
-            title={isDonationSpecificID && !lotSelections ? "Select lots first using the button to the right" : undefined}
+            disabled={isSpecificID && !lotSelections}
+            title={isSpecificID && !lotSelections ? "Select lots first using the button to the right" : undefined}
             onClick={async () => { await handleAdd(); }}
           >➕ Add Transaction</button>
-          {type === TransactionType.Donation && (
-            <button className="btn-secondary" onClick={previewDonationLots}>
-              {isDonationSpecificID ? "🔍 Select Lots" : "🔍 Preview Lot Consumption"}
+          {isDisposition && (
+            <button className="btn-secondary" onClick={previewDispositionLots}>
+              {isSpecificID ? "🔍 Select Lots" : "🔍 Preview Lot Consumption"}
             </button>
           )}
         </div>
       </div>
 
-      {/* Lot Picker for Specific ID Donations */}
-      {showLotPicker && isDonationSpecificID && (
+      {/* Lot Picker for Specific ID (Sell + Donation) */}
+      {showLotPicker && isSpecificID && (
         <div className="mt-4">
           <LotPicker
             lots={wallet
@@ -324,37 +339,48 @@ export function AddTransactionView() {
               : currentLots}
             targetAmount={Number(amountStr)}
             saleDate={date ? new Date(date + "T12:00:00").toISOString() : undefined}
-            onConfirm={handleDonationLotConfirm}
-            onCancel={handleDonationLotCancel}
+            onConfirm={handleDispositionLotConfirm}
+            onCancel={handleDispositionLotCancel}
           />
         </div>
       )}
 
-      {/* Donation Lot Preview */}
-      {donationPreview && type === TransactionType.Donation && (
-        <div className="card mt-4 border-l-4 border-l-purple-500">
+      {/* Disposition Lot Preview (Sell + Donation) */}
+      {dispositionPreview && isDisposition && (
+        <div className={`card mt-4 border-l-4 ${type === TransactionType.Donation ? "border-l-purple-500" : "border-l-orange-500"}`}>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-purple-700 dark:text-purple-400">Lot Consumption Preview ({donationMethod})</h3>
-            <span className="text-xs text-purple-500 font-medium">PREVIEW — not yet recorded</span>
+            <h3 className={`font-semibold ${type === TransactionType.Donation ? "text-purple-700 dark:text-purple-400" : ""}`}>
+              Lot Consumption Preview ({dispositionMethod})
+            </h3>
+            <span className={`text-xs font-medium ${type === TransactionType.Donation ? "text-purple-500" : "text-orange-500"}`}>PREVIEW — not yet recorded</span>
           </div>
-          {isDonationSpecificID && lotSelections && (
+          {isSpecificID && lotSelections && (
             <div className="text-xs text-blue-500 mb-2">Using Specific Identification — {lotSelections.length} lot(s) manually selected</div>
           )}
-          <p className="text-xs text-gray-500 mb-3">
-            These lots will be consumed when this donation is processed. Long-term lots (held &gt;1 year) qualify for a deduction at full Fair Market Value. Short-term lots are deductible at cost basis only.
-          </p>
+          {type === TransactionType.Donation && (
+            <p className="text-xs text-gray-500 mb-3">
+              These lots will be consumed when this donation is processed. Long-term lots (held &gt;1 year) qualify for a deduction at full Fair Market Value. Short-term lots are deductible at cost basis only.
+            </p>
+          )}
+          {type === TransactionType.Sell && (
+            <p className="text-xs text-gray-500 mb-3">
+              These lots will be consumed by this sale. The cost basis determines your capital gain or loss for Form 8949.
+            </p>
+          )}
 
           {/* Lot details table */}
-          <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr] gap-2 text-xs font-semibold text-gray-500 pb-2 border-b border-gray-200 dark:border-gray-700 mb-1">
+          <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr] gap-2 text-xs font-semibold text-gray-500 pb-2 border-b border-gray-200 dark:border-gray-700 mb-1">
             <div>Purchase Date</div>
+            <div>Wallet</div>
             <div className="text-right">BTC Amount</div>
             <div className="text-right">Cost Basis</div>
             <div className="text-right">Days Held</div>
             <div>Term</div>
           </div>
-          {donationPreview.lotDetails.map((d, idx) => (
-            <div key={idx} className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr] gap-2 py-1.5 text-sm border-b border-gray-100 dark:border-gray-800">
+          {dispositionPreview.lotDetails.map((d, idx) => (
+            <div key={idx} className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr] gap-2 py-1.5 text-sm border-b border-gray-100 dark:border-gray-800">
               <div>{formatDate(d.purchaseDate)}</div>
+              <div className="text-xs text-gray-500 truncate" title={d.wallet || d.exchange}>{d.wallet || d.exchange}</div>
               <div className="text-right tabular-nums">{formatBTC(d.amountBTC)}</div>
               <div className="text-right tabular-nums">{formatUSD(d.totalCost)}</div>
               <div className="text-right tabular-nums">{d.daysHeld}</div>
@@ -367,19 +393,33 @@ export function AddTransactionView() {
           ))}
 
           {/* Summary */}
-          <div className="mt-3 flex gap-6 text-sm">
+          <div className="mt-3 flex gap-6 text-sm flex-wrap">
             <div>
               <span className="text-gray-500">Total BTC:</span>{" "}
-              <span className="tabular-nums font-medium">{formatBTC(donationPreview.amountSold)}</span>
+              <span className="tabular-nums font-medium">{formatBTC(dispositionPreview.amountSold)}</span>
             </div>
             <div>
               <span className="text-gray-500">Total Cost Basis:</span>{" "}
-              <span className="tabular-nums font-medium">{formatUSD(donationPreview.costBasis)}</span>
+              <span className="tabular-nums font-medium">{formatUSD(dispositionPreview.costBasis)}</span>
             </div>
+            {type === TransactionType.Sell && (
+              <>
+                <div>
+                  <span className="text-gray-500">Proceeds:</span>{" "}
+                  <span className="tabular-nums font-medium">{formatUSD(dispositionPreview.totalProceeds)}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Gain/Loss:</span>{" "}
+                  <span className={`tabular-nums font-semibold ${dispositionPreview.gainLoss >= 0 ? "text-green-600" : "text-red-500"}`}>
+                    {dispositionPreview.gainLoss >= 0 ? "+" : ""}{formatUSD(dispositionPreview.gainLoss)}
+                  </span>
+                </div>
+              </>
+            )}
             <div>
               <span className="text-gray-500">Term:</span>{" "}
-              <span className={`badge ${donationPreview.isLongTerm ? "badge-green" : donationPreview.isMixedTerm ? "badge-blue" : "badge-orange"} text-xs`}>
-                {donationPreview.isMixedTerm ? "Mixed" : donationPreview.isLongTerm ? "Long-term" : "Short-term"}
+              <span className={`badge ${dispositionPreview.isLongTerm ? "badge-green" : dispositionPreview.isMixedTerm ? "badge-blue" : "badge-orange"} text-xs`}>
+                {dispositionPreview.isMixedTerm ? "Mixed" : dispositionPreview.isLongTerm ? "Long-term" : "Short-term"}
               </span>
             </div>
           </div>

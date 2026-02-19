@@ -1,15 +1,11 @@
 // Accounting methods for cost basis calculation
 export enum AccountingMethod {
   FIFO = "FIFO",
-  LIFO = "LIFO",
-  HIFO = "HIFO",
   SpecificID = "SpecificID",
 }
 
 export const AccountingMethodDisplayNames: Record<AccountingMethod, string> = {
   [AccountingMethod.FIFO]: "First In, First Out",
-  [AccountingMethod.LIFO]: "Last In, First Out",
-  [AccountingMethod.HIFO]: "Highest In, First Out",
   [AccountingMethod.SpecificID]: "Specific Identification",
 };
 

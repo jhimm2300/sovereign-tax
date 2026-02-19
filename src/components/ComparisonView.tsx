@@ -53,13 +53,11 @@ export function ComparisonView() {
     <div className="p-8 max-w-5xl">
       <h1 className="text-3xl font-bold mb-1">Compare Methods</h1>
       <HelpPanel
-        subtitle="Side-by-side comparison of FIFO, LIFO, and HIFO to find your optimal accounting method."
+        subtitle="Capital gains summary using FIFO — the IRS default method. Use Specific Identification in Record Sale to manually select lots."
         expandedContent={
           <>
-            <p><strong>FIFO (First In, First Out):</strong> Sells oldest lots first. Often results in more long-term gains in a rising market.</p>
-            <p><strong>LIFO (Last In, First Out):</strong> Sells newest lots first. May produce more short-term gains but with a higher cost basis.</p>
-            <p><strong>HIFO (Highest In, First Out):</strong> Sells highest-cost lots first. Generally minimizes taxable gains.</p>
-            <p><strong>Note:</strong> Specific ID is excluded from auto-comparison because it requires manual lot selection per sale.</p>
+            <p><strong>FIFO (First In, First Out):</strong> Sells oldest lots first. This is the IRS default method when specific lots are not identified before the sale.</p>
+            <p><strong>Specific Identification:</strong> Lets you choose exactly which lots to sell. Must be elected before or at the time of disposal. Use the Record Sale view to make Specific ID elections.</p>
           </>
         }
       />
@@ -95,9 +93,9 @@ export function ComparisonView() {
         </div>
       </div>
 
-      {/* Comparison table */}
+      {/* Summary table */}
       <div className="card mb-6">
-        <div className="grid grid-cols-4 gap-4">
+        <div className={`grid grid-cols-2 gap-4`}>
           <div></div>
           {results.map((r) => (
             <div key={r.method} className="text-center">
@@ -111,17 +109,17 @@ export function ComparisonView() {
         <CompRow label="Total Gain/Loss" values={results.map((r) => ({ value: r.totalGL, isBest: r.method === bestMethod.method }))} />
         <CompRow label="Short-term" values={results.map((r) => ({ value: r.stGL }))} />
         <CompRow label="Long-term" values={results.map((r) => ({ value: r.ltGL }))} />
-        <div className="grid grid-cols-4 gap-4 py-2">
+        <div className={`grid grid-cols-2 gap-4 py-2`}>
           <div className="text-gray-500"># Sales</div>
           {results.map((r) => <div key={r.method} className="text-center tabular-nums">{r.salesCount}</div>)}
         </div>
       </div>
 
-      {/* Recommendation */}
+      {/* Info */}
       <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg flex items-center gap-3">
         <span className="text-xl">💡</span>
         <span>
-          <strong>{AccountingMethodDisplayNames[bestMethod.method]} ({bestMethod.method})</strong> produces the lowest taxable gain for {selectedYear}.
+          <strong>FIFO</strong> is the IRS default method. To optimize which lots are sold, use <strong>Specific Identification</strong> in the Record Sale view before executing a trade.
         </span>
       </div>
     </div>
@@ -130,7 +128,7 @@ export function ComparisonView() {
 
 function CompRow({ label, values }: { label: string; values: { value: number; isBest?: boolean }[] }) {
   return (
-    <div className="grid grid-cols-4 gap-4 py-2">
+    <div className={`grid grid-cols-2 gap-4 py-2`}>
       <div className="text-gray-500">{label}</div>
       {values.map((v, i) => (
         <div key={i} className={`text-center tabular-nums ${v.isBest ? "font-bold" : ""} ${v.value >= 0 ? "text-green-600" : "text-red-500"}`}>

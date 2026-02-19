@@ -44,7 +44,7 @@ export interface LotSelection {
 
 /**
  * Cost Basis Engine — pure calculation, no side effects.
- * Supports FIFO, LIFO, HIFO, and Specific Identification methods.
+ * Supports FIFO and Specific Identification methods (the only two IRS-permitted methods).
  *
  * Lot IDs are deterministic (derived from source transaction ID) so that
  * Specific ID lot selections in recordedSales can reliably match lots
@@ -343,27 +343,10 @@ function processSale(
     }
   } else {
     // Standard method: sort indices by method
-    let sortedIndices: number[];
-    const effectiveMethod = method === AccountingMethod.SpecificID ? AccountingMethod.FIFO : method;
-    switch (effectiveMethod) {
-      case AccountingMethod.FIFO:
-        sortedIndices = availableIndices.sort(
-          (a, b) => new Date(lots[a].purchaseDate).getTime() - new Date(lots[b].purchaseDate).getTime()
-        );
-        break;
-      case AccountingMethod.LIFO:
-        sortedIndices = availableIndices.sort(
-          (a, b) => new Date(lots[b].purchaseDate).getTime() - new Date(lots[a].purchaseDate).getTime()
-        );
-        break;
-      case AccountingMethod.HIFO:
-        sortedIndices = availableIndices.sort(
-          (a, b) => lots[b].pricePerBTC - lots[a].pricePerBTC
-        );
-        break;
-      default:
-        sortedIndices = availableIndices;
-    }
+    // FIFO is the only automatic method (IRS default). Specific ID without selections also falls back to FIFO.
+    const sortedIndices = availableIndices.sort(
+      (a, b) => new Date(lots[a].purchaseDate).getTime() - new Date(lots[b].purchaseDate).getTime()
+    );
 
     for (const idx of sortedIndices) {
       if (remainingToSell <= 0) break;
