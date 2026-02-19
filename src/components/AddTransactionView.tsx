@@ -116,6 +116,7 @@ export function AddTransactionView() {
         donationFmvPerBTC: price,
         donationFmvTotal: donationPreview.amountSold * price,
         method: AccountingMethod.SpecificID,
+        sourceTransactionId: txn.id,
       };
       await state.recordSale(saleRecord);
     }
@@ -188,7 +189,7 @@ export function AddTransactionView() {
           <span className="w-24 text-right text-gray-500">Type:</span>
           <div className="segmented">
             {Object.values(TransactionType).map((t) => (
-              <button key={t} className={`segmented-btn ${type === t ? "active" : ""}`} onClick={() => { setType(t); setDonationPreview(null); }}>
+              <button key={t} className={`segmented-btn ${type === t ? "active" : ""}`} onClick={() => { setType(t); setDonationPreview(null); setLotSelections(null); setShowLotPicker(false); }}>
                 {TransactionTypeDisplayNames[t]}
               </button>
             ))}
@@ -227,13 +228,13 @@ export function AddTransactionView() {
         {/* Date */}
         <div className="flex items-center gap-4">
           <span className="w-24 text-right text-gray-500">Date:</span>
-          <input type="date" className="input w-48" value={date} onChange={(e) => { setDate(e.target.value); setDonationPreview(null); }} />
+          <input type="date" className="input w-48" value={date} onChange={(e) => { setDate(e.target.value); setDonationPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
         </div>
 
         {/* Amount */}
         <div className="flex items-center gap-4">
           <span className="w-24 text-right text-gray-500">BTC Amount:</span>
-          <input className="input w-48" placeholder="0.00000000" value={amountStr} onChange={(e) => { setAmountStr(e.target.value); setDonationPreview(null); }} />
+          <input className="input w-48" placeholder="0.00000000" value={amountStr} onChange={(e) => { setAmountStr(e.target.value); setDonationPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
         </div>
 
         {/* Price */}
@@ -282,13 +283,13 @@ export function AddTransactionView() {
         {/* Exchange */}
         <div className="flex items-center gap-4">
           <span className="w-24 text-right text-gray-500">Exchange:</span>
-          <input className="input w-48" placeholder="e.g., Coinbase" value={exchange} onChange={(e) => setExchange(e.target.value)} />
+          <input className="input w-48" placeholder="e.g., Coinbase" value={exchange} onChange={(e) => { setExchange(e.target.value); setDonationPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
         </div>
 
         {/* Wallet */}
         <div className="flex items-center gap-4">
           <span className="w-24 text-right text-gray-500">Wallet:</span>
-          <input className="input w-48" placeholder="Defaults to exchange" value={wallet} onChange={(e) => setWallet(e.target.value)} />
+          <input className="input w-48" placeholder="Defaults to exchange" value={wallet} onChange={(e) => { setWallet(e.target.value); setDonationPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
           <span className="text-xs text-gray-400">(optional — for per-wallet cost basis tracking)</span>
         </div>
 
@@ -300,7 +301,12 @@ export function AddTransactionView() {
         </div>
 
         <div className="flex gap-3 pt-2">
-          <button className="btn-primary" onClick={async () => { await handleAdd(); }}>➕ Add Transaction</button>
+          <button
+            className="btn-primary"
+            disabled={isDonationSpecificID && !lotSelections}
+            title={isDonationSpecificID && !lotSelections ? "Select lots first using the button to the right" : undefined}
+            onClick={async () => { await handleAdd(); }}
+          >➕ Add Transaction</button>
           {type === TransactionType.Donation && (
             <button className="btn-secondary" onClick={previewDonationLots}>
               {isDonationSpecificID ? "🔍 Select Lots" : "🔍 Preview Lot Consumption"}
@@ -317,6 +323,7 @@ export function AddTransactionView() {
               ? currentLots.filter((l) => (l.wallet || l.exchange || "").toLowerCase() === wallet.toLowerCase())
               : currentLots}
             targetAmount={Number(amountStr)}
+            saleDate={date ? new Date(date + "T12:00:00").toISOString() : undefined}
             onConfirm={handleDonationLotConfirm}
             onCancel={handleDonationLotCancel}
           />

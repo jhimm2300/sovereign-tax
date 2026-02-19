@@ -64,14 +64,20 @@ export function calculate(
   const sales: SaleRecord[] = [];
   const warnings: string[] = [];
 
-  // Build lookup for recorded Specific ID SaleRecords (keyed by date|amount)
-  // These represent permanent lot elections made by the user at time of disposition
-  const recordedMap = new Map<string, SaleRecord>();
+  // Build lookup for recorded Specific ID SaleRecords
+  // Primary key: sourceTransactionId (unique, collision-proof)
+  // Fallback key: date|amount (for pre-v1.3.0 recordings without sourceTransactionId)
+  const recordedByTxnId = new Map<string, SaleRecord>();
+  const recordedByDateAmount = new Map<string, SaleRecord>();
   if (recordedSales) {
     for (const rs of recordedSales) {
       if (rs.method === AccountingMethod.SpecificID) {
-        const key = `${rs.saleDate}|${rs.amountSold.toFixed(8)}`;
-        recordedMap.set(key, rs);
+        if (rs.sourceTransactionId) {
+          recordedByTxnId.set(rs.sourceTransactionId, rs);
+        } else {
+          const key = `${rs.saleDate}|${rs.amountSold.toFixed(8)}`;
+          recordedByDateAmount.set(key, rs);
+        }
       }
     }
   }
@@ -101,13 +107,14 @@ export function calculate(
 
       case TransactionType.Sell: {
         // Check for a recorded Specific ID election for this sale
-        const key = `${trans.date}|${trans.amountBTC.toFixed(8)}`;
-        const recorded = recordedMap.get(key);
+        // Primary: match by transaction ID (collision-proof). Fallback: date|amount (legacy).
+        const recorded = recordedByTxnId.get(trans.id)
+          || recordedByDateAmount.get(`${trans.date}|${trans.amountBTC.toFixed(8)}`);
         let lotSelections = recorded ? extractLotSelections(recorded, lots) : undefined;
         let effectiveMethod = recorded ? AccountingMethod.SpecificID : method;
 
-        // If recorded but lot matching failed (legacy data), fall back to current method with warning
-        if (recorded && lotSelections && lotSelections.length === 0) {
+        // If recorded but lot matching failed (partial or total), fall back to current method with warning
+        if (recorded && lotSelections === null) {
           warnings.push(
             `Specific ID election for sale on ${formatDateShort(trans.date)} could not resolve lot IDs (legacy recording). Using ${method} as fallback.`
           );
@@ -115,7 +122,7 @@ export function calculate(
           effectiveMethod = method;
         }
 
-        const sale = processSale(trans, lots, effectiveMethod, lotSelections, warnings);
+        const sale = processSale(trans, lots, effectiveMethod, lotSelections ?? undefined, warnings);
         if (sale) {
           sales.push(sale);
         } else {
@@ -129,13 +136,14 @@ export function calculate(
         const originalFmvPerBTC = trans.pricePerBTC;
 
         // Check for a recorded Specific ID election for this donation
-        const key = `${trans.date}|${trans.amountBTC.toFixed(8)}`;
-        const recorded = recordedMap.get(key);
+        // Primary: match by transaction ID (collision-proof). Fallback: date|amount (legacy).
+        const recorded = recordedByTxnId.get(trans.id)
+          || recordedByDateAmount.get(`${trans.date}|${trans.amountBTC.toFixed(8)}`);
         let lotSelections = recorded ? extractLotSelections(recorded, lots) : undefined;
         let effectiveMethod = recorded ? AccountingMethod.SpecificID : method;
 
-        // If recorded but lot matching failed (legacy data), fall back to current method with warning
-        if (recorded && lotSelections && lotSelections.length === 0) {
+        // If recorded but lot matching failed (partial or total), fall back to current method with warning
+        if (recorded && lotSelections === null) {
           warnings.push(
             `Specific ID election for donation on ${formatDateShort(trans.date)} could not resolve lot IDs (legacy recording). Using ${method} as fallback.`
           );
@@ -148,7 +156,7 @@ export function calculate(
           pricePerBTC: 0,
           totalUSD: 0,
         };
-        const donationResult = processSale(donationAsSale, lots, effectiveMethod, lotSelections, warnings);
+        const donationResult = processSale(donationAsSale, lots, effectiveMethod, lotSelections ?? undefined, warnings);
         if (donationResult) {
           // Override: zero proceeds, zero gain/loss (donations are not capital gains events per IRC §170)
           donationResult.totalProceeds = 0;
@@ -184,9 +192,10 @@ export function calculate(
  * For those, we match against current lots by purchaseDate + costBasisPerBTC
  * to recover the user's original lot election.
  */
-function extractLotSelections(recorded: SaleRecord, currentLots?: Lot[]): LotSelection[] {
+function extractLotSelections(recorded: SaleRecord, currentLots?: Lot[]): LotSelection[] | null {
   const selections: LotSelection[] = [];
   const usedLotIds = new Set<string>();
+  let unmatchedCount = 0;
 
   for (const d of recorded.lotDetails) {
     if (d.lotId) {
@@ -206,10 +215,17 @@ function extractLotSelections(recorded: SaleRecord, currentLots?: Lot[]): LotSel
       if (match) {
         selections.push({ lotId: match.id, amountBTC: d.amountBTC });
         usedLotIds.add(match.id);
+      } else {
+        unmatchedCount++;
       }
-      // If no match found, this lot detail is dropped — FIFO fallback will cover it
+    } else {
+      unmatchedCount++;
     }
   }
+
+  // If ANY lot details failed to resolve, return null to trigger full fallback.
+  // Partial selections are dangerous — they silently under-fill the disposition.
+  if (unmatchedCount > 0) return null;
 
   return selections;
 }
@@ -304,7 +320,8 @@ function processSale(
       if (lotIdx === -1 || !availableSet.has(lotIdx) || lots[lotIdx].remainingBTC <= 0) continue;
 
       const sellFromLot = Math.min(sel.amountBTC, lots[lotIdx].remainingBTC, remainingToSell);
-      const costBasisPerBTC = lots[lotIdx].pricePerBTC;
+      // Use fee-inclusive cost basis: totalCost includes exchange fee (cost basis = amount*price + fee)
+      const costBasisPerBTC = lots[lotIdx].totalCost / lots[lotIdx].amountBTC;
       const costForPortion = sellFromLot * costBasisPerBTC;
       totalCostBasis += costForPortion;
 
@@ -325,6 +342,10 @@ function processSale(
       });
 
       lots[lotIdx].remainingBTC -= sellFromLot;
+      // Epsilon snap: prevent IEEE 754 float drift from creating phantom lots
+      if (lots[lotIdx].remainingBTC > 0 && lots[lotIdx].remainingBTC < 1e-10) {
+        lots[lotIdx].remainingBTC = 0;
+      }
       remainingToSell -= sellFromLot;
     }
   } else {
@@ -355,7 +376,8 @@ function processSale(
       if (remainingToSell <= 0) break;
 
       const sellFromLot = Math.min(remainingToSell, lots[idx].remainingBTC);
-      const costBasisPerBTC = lots[idx].pricePerBTC;
+      // Use fee-inclusive cost basis: totalCost includes exchange fee (cost basis = amount*price + fee)
+      const costBasisPerBTC = lots[idx].totalCost / lots[idx].amountBTC;
       const costForPortion = sellFromLot * costBasisPerBTC;
       totalCostBasis += costForPortion;
 
@@ -376,6 +398,10 @@ function processSale(
       });
 
       lots[idx].remainingBTC -= sellFromLot;
+      // Epsilon snap: prevent IEEE 754 float drift from creating phantom lots
+      if (lots[idx].remainingBTC > 0 && lots[idx].remainingBTC < 1e-10) {
+        lots[idx].remainingBTC = 0;
+      }
       remainingToSell -= sellFromLot;
     }
   }

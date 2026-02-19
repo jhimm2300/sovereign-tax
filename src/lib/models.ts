@@ -56,6 +56,7 @@ export interface SaleRecord {
   isDonation?: boolean; // true for charitable donations — excluded from Form 8949
   donationFmvPerBTC?: number; // Original FMV per BTC from the donation transaction
   donationFmvTotal?: number; // Original total FMV (amount × FMV) from the donation transaction
+  sourceTransactionId?: string; // Links to originating Sell/Donation transaction for unique keying
 }
 
 export interface CalculationResult {

@@ -11,11 +11,12 @@ export interface LotSelection {
 interface LotPickerProps {
   lots: Lot[];
   targetAmount: number;
+  saleDate?: string; // ISO date string — used for accurate holding period display (defaults to today)
   onConfirm: (selections: LotSelection[]) => void;
   onCancel: () => void;
 }
 
-export function LotPicker({ lots, targetAmount, onConfirm, onCancel }: LotPickerProps) {
+export function LotPicker({ lots, targetAmount, saleDate, onConfirm, onCancel }: LotPickerProps) {
   const availableLots = lots.filter((l) => l.remainingBTC > 0);
   const [selections, setSelections] = useState<Record<string, number>>({});
 
@@ -37,15 +38,17 @@ export function LotPicker({ lots, targetAmount, onConfirm, onCancel }: LotPicker
     });
   };
 
-  const updateAmount = (lotId: string, value: string) => {
+  const updateAmount = (lotId: string, value: string, maxAvailable: number) => {
     const num = Number(value);
     if (isNaN(num) || num < 0) return;
+    // Clamp to lot's available BTC
+    const clamped = Math.min(num, maxAvailable);
     setSelections((prev) => {
       const copy = { ...prev };
-      if (num === 0) {
+      if (clamped === 0) {
         delete copy[lotId];
       } else {
-        copy[lotId] = num;
+        copy[lotId] = clamped;
       }
       return copy;
     });
@@ -58,7 +61,8 @@ export function LotPicker({ lots, targetAmount, onConfirm, onCancel }: LotPicker
     onConfirm(result);
   };
 
-  const now = new Date().toISOString();
+  // Use sale date for accurate holding period display; fall back to today for simulations
+  const referenceDate = saleDate || new Date().toISOString();
 
   return (
     <div className="card">
@@ -89,8 +93,8 @@ export function LotPicker({ lots, targetAmount, onConfirm, onCancel }: LotPicker
         .sort((a, b) => new Date(a.purchaseDate).getTime() - new Date(b.purchaseDate).getTime())
         .map((lot) => {
           const isSelected = !!selections[lot.id];
-          const daysHeld = daysBetween(lot.purchaseDate, now);
-          const isLongTerm = isMoreThanOneYear(lot.purchaseDate, now);
+          const daysHeld = daysBetween(lot.purchaseDate, referenceDate);
+          const isLongTerm = isMoreThanOneYear(lot.purchaseDate, referenceDate);
           return (
             <div key={lot.id} className={`grid grid-cols-[40px_1fr_1fr_1fr_1fr_1fr_120px] gap-2 py-2 text-sm border-b border-gray-100 dark:border-gray-800 ${isSelected ? "bg-blue-50 dark:bg-blue-900/10" : ""}`}>
               <div>
@@ -114,7 +118,7 @@ export function LotPicker({ lots, targetAmount, onConfirm, onCancel }: LotPicker
                   <input
                     className="input w-full text-right text-sm"
                     value={selections[lot.id] || ""}
-                    onChange={(e) => updateAmount(lot.id, e.target.value)}
+                    onChange={(e) => updateAmount(lot.id, e.target.value, lot.remainingBTC)}
                     max={lot.remainingBTC}
                   />
                 )}

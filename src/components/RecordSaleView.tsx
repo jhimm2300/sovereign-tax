@@ -78,7 +78,8 @@ export function RecordSaleView() {
       notes: "Manually recorded sale",
     });
     await state.addTransaction(txn);
-    await state.recordSale(preview);
+    // Link the SaleRecord to the source transaction for collision-proof Specific ID lookup
+    await state.recordSale({ ...preview, sourceTransactionId: txn.id });
     setSuccess("Sale recorded successfully");
     setPreview(null);
     setLotSelections(null);
@@ -115,11 +116,11 @@ export function RecordSaleView() {
         <div className="flex gap-4 mb-4 flex-wrap">
           <div>
             <label className="text-xs text-gray-500 block mb-1">Sale Date</label>
-            <input type="date" className="input" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} />
+            <input type="date" className="input" value={saleDate} onChange={(e) => { setSaleDate(e.target.value); setPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
           </div>
           <div>
             <label className="text-xs text-gray-500 block mb-1">BTC Amount</label>
-            <input className="input w-44" placeholder="0.00000000" value={amountStr} onChange={(e) => setAmountStr(e.target.value)} />
+            <input className="input w-44" placeholder="0.00000000" value={amountStr} onChange={(e) => { setAmountStr(e.target.value); setPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -129,7 +130,7 @@ export function RecordSaleView() {
             {useLive ? (
               <div className="text-lg font-medium tabular-nums h-8">{state.priceState.currentPrice ? formatUSD(state.priceState.currentPrice) : "..."}</div>
             ) : (
-              <input className="input w-44" placeholder="0.00" value={priceStr} onChange={(e) => setPriceStr(e.target.value)} />
+              <input className="input w-44" placeholder="0.00" value={priceStr} onChange={(e) => { setPriceStr(e.target.value); setPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
             )}
           </div>
           <div>
@@ -141,7 +142,7 @@ export function RecordSaleView() {
           {state.availableWallets.length > 1 && (
             <div>
               <label className="text-xs text-gray-500 block mb-1">Wallet</label>
-              <select className="select" value={selectedWallet} onChange={(e) => { setSelectedWallet(e.target.value); setPreview(null); }}>
+              <select className="select" value={selectedWallet} onChange={(e) => { setSelectedWallet(e.target.value); setPreview(null); setLotSelections(null); setShowLotPicker(false); }}>
                 <option value="">All Wallets</option>
                 {state.availableWallets.map((w) => <option key={w} value={w}>{w}</option>)}
               </select>
@@ -167,6 +168,7 @@ export function RecordSaleView() {
               ? fullResult.lots.filter((l) => (l.wallet || l.exchange || "").toLowerCase() === selectedWallet.toLowerCase())
               : fullResult.lots}
             targetAmount={Number(amountStr)}
+            saleDate={new Date(saleDate + "T12:00:00").toISOString()}
             onConfirm={handleLotPickerConfirm}
             onCancel={handleLotPickerCancel}
           />
