@@ -132,9 +132,6 @@ export function calculate(
       }
 
       case TransactionType.Donation: {
-        // Donation consumes lots like a sale but with zero proceeds (non-taxable disposition)
-        const originalFmvPerBTC = trans.pricePerBTC;
-
         // Check for a recorded Specific ID election for this donation
         // Primary: match by transaction ID (collision-proof). Fallback: date|amount (legacy).
         const recorded = recordedByTxnId.get(trans.id)
@@ -151,21 +148,9 @@ export function calculate(
           effectiveMethod = method;
         }
 
-        const donationAsSale: Transaction = {
-          ...trans,
-          pricePerBTC: 0,
-          totalUSD: 0,
-        };
-        const donationResult = processSale(donationAsSale, lots, effectiveMethod, lotSelections ?? undefined, warnings);
+        // Pass real transaction — processSale handles zero proceeds/gainLoss natively for donations
+        const donationResult = processSale(trans, lots, effectiveMethod, lotSelections ?? undefined, warnings, "donation", trans.pricePerBTC);
         if (donationResult) {
-          // Override: zero proceeds, zero gain/loss (donations are not capital gains events per IRC §170)
-          donationResult.totalProceeds = 0;
-          donationResult.salePricePerBTC = 0;
-          donationResult.gainLoss = 0;
-          donationResult.isDonation = true;
-          // Store original FMV for Form 8283 reporting (pro-rate if partially filled)
-          donationResult.donationFmvPerBTC = originalFmvPerBTC;
-          donationResult.donationFmvTotal = donationResult.amountSold * originalFmvPerBTC;
           sales.push(donationResult);
         } else {
           warnings.push(`No lots available for donation on ${formatDateShort(trans.date)}`);
@@ -264,18 +249,26 @@ export function simulateSale(
   return processSale(fakeSale, lotsCopy, method, lotSelections);
 }
 
+/** Disposition type: sale (taxable) or donation (non-taxable, IRC §170) */
+type DispositionType = "sale" | "donation";
+
 /**
- * Process a sale against available lots.
+ * Process a disposition (sale or donation) against available lots.
  * MUTATES the lots array (reduces remainingBTC).
  * Enforces per-wallet/per-account cost basis per IRS TD 9989 (effective Jan 1, 2025).
  * Optionally accepts lotSelections for Specific Identification method.
+ *
+ * For donations: proceeds, salePricePerBTC, and gainLoss are always zero.
+ * FMV is stored in donationFmvPerBTC/donationFmvTotal for Form 8283 reporting.
  */
 function processSale(
   sale: Transaction,
   lots: Lot[],
   method: AccountingMethod,
   lotSelections?: LotSelection[],
-  warnings?: string[]
+  warnings?: string[],
+  dispositionType: DispositionType = "sale",
+  fmvPerBTC?: number
 ): SaleRecord | null {
   const amountToSell = sale.amountBTC;
   if (amountToSell <= 0) return null;
@@ -407,11 +400,16 @@ function processSale(
   }
 
   const amountSold = amountToSell - remainingToSell;
-  // Pro-rate proceeds if only partially filled (not enough lots to cover full sale)
-  const totalProceeds = amountSold < amountToSell
-    ? amountSold * sale.pricePerBTC
-    : sale.totalUSD;
-  const gainLoss = totalProceeds - totalCostBasis;
+  const isDonation = dispositionType === "donation";
+
+  // Donations: zero proceeds, zero gain/loss (IRC §170 — not a capital gains event)
+  // Sales: pro-rate proceeds if only partially filled (not enough lots to cover full sale)
+  const totalProceeds = isDonation
+    ? 0
+    : amountSold < amountToSell
+      ? amountSold * sale.pricePerBTC
+      : sale.totalUSD;
+  const gainLoss = isDonation ? 0 : totalProceeds - totalCostBasis;
   const avgHoldingDays =
     holdingDays.length === 0
       ? 0
@@ -428,7 +426,7 @@ function processSale(
     id: crypto.randomUUID(),
     saleDate: sale.date,
     amountSold,
-    salePricePerBTC: sale.pricePerBTC,
+    salePricePerBTC: isDonation ? 0 : sale.pricePerBTC,
     totalProceeds,
     costBasis: totalCostBasis,
     gainLoss,
@@ -438,5 +436,8 @@ function processSale(
     isLongTerm,
     isMixedTerm,
     method,
+    isDonation: isDonation || undefined,
+    donationFmvPerBTC: isDonation ? fmvPerBTC : undefined,
+    donationFmvTotal: isDonation ? amountSold * (fmvPerBTC ?? 0) : undefined,
   };
 }

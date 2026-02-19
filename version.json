@@ -1,8 +1,8 @@
 {
-  "latest": "1.3.1",
+  "latest": "1.3.2",
   "url": "https://sovereigntax.io",
-  "releaseDate": "2026-02-18",
-  "notes": "Audit fixes: fee-inclusive cost basis, phantom lot prevention, stale state clearing, LotPicker improvements",
+  "releaseDate": "2026-02-19",
+  "notes": "Cost basis engine refactor: native donation disposition handling, cleaner processSale() architecture",
   "downloads": {
     "macos": "https://sovereigntax.io/downloads/SovereignTax-macOS.dmg",
     "windows": "https://sovereigntax.io/downloads/SovereignTax-Windows.exe",
