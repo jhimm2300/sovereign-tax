@@ -64,6 +64,36 @@ export function AddTransactionView() {
   }, [date, amountStr, state]);
 
   const isSpecificID = isDisposition && dispositionMethod === AccountingMethod.SpecificID;
+  const [usingSavedSelections, setUsingSavedSelections] = useState(false);
+
+  // Check for saved lot selections from Simulation
+  const saved = state.savedLotSelections;
+  const hasSavedSelections = isSpecificID && saved !== null
+    && saved.method === AccountingMethod.SpecificID
+    && (saved.wallet.toLowerCase() === (wallet || "").toLowerCase()) // wallet match (case-insensitive)
+    && !showLotPicker && !lotSelections && !dispositionPreview;
+
+  // Multi-wallet warning: check if selected wallet has enough BTC for the disposition
+  const walletBTCAvailable = useMemo(() => {
+    if (!isDisposition || !wallet) return null;
+    const walletNorm = wallet.trim().toLowerCase();
+    return currentLots
+      .filter((l) => l.remainingBTC > 0 && (l.wallet || l.exchange || "").toLowerCase() === walletNorm)
+      .reduce((sum, l) => sum + l.remainingBTC, 0);
+  }, [isDisposition, wallet, currentLots]);
+  const requestedAmount = Number(amountStr) || 0;
+  const showWalletWarning = isDisposition && wallet && walletBTCAvailable !== null && requestedAmount > 0 && requestedAmount > walletBTCAvailable + 0.00000001;
+
+  /** Use saved lot selections from Simulation to pre-fill the LotPicker */
+  const useSavedSelectionsHandler = () => {
+    if (!saved) return;
+    setError(null);
+    if (!amountStr) setAmountStr(String(saved.amountBTC));
+    setUsingSavedSelections(true);
+    setShowLotPicker(true);
+    setDispositionPreview(null);
+    setLotSelections(null);
+  };
 
   /** Preview which lots will be consumed by this sell or donation */
   const previewDispositionLots = () => {
@@ -74,6 +104,7 @@ export function AddTransactionView() {
 
     if (isSpecificID) {
       // Show lot picker for manual selection
+      setUsingSavedSelections(false);
       setShowLotPicker(true);
       setLotSelections(null);
       return;
@@ -136,6 +167,10 @@ export function AddTransactionView() {
       }
     }
 
+    // Clear saved lot selections after any disposition — lots may have been consumed by FIFO or Specific ID
+    if (isDisposition) {
+      state.setSavedLotSelections(null);
+    }
     setSuccess(`${TransactionTypeDisplayNames[txn.transactionType]} of ${formatBTC(txn.amountBTC)} BTC added`);
     setAmountStr(""); setPriceStr(""); setTotalStr(""); setFeeStr(""); setWallet(""); setNotes(""); setIncomeType("");
     setPendingTxn(null);
@@ -143,6 +178,7 @@ export function AddTransactionView() {
     setDispositionPreview(null);
     setLotSelections(null);
     setShowLotPicker(false);
+    setUsingSavedSelections(false);
   };
 
   const handleAdd = async () => {
@@ -204,7 +240,7 @@ export function AddTransactionView() {
           <span className="w-24 text-right text-gray-500">Type:</span>
           <div className="segmented">
             {Object.values(TransactionType).map((t) => (
-              <button key={t} className={`segmented-btn ${type === t ? "active" : ""}`} onClick={() => { setType(t); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); }}>
+              <button key={t} className={`segmented-btn ${type === t ? "active" : ""}`} onClick={() => { setType(t); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); setUsingSavedSelections(false); }}>
                 {TransactionTypeDisplayNames[t]}
               </button>
             ))}
@@ -231,7 +267,7 @@ export function AddTransactionView() {
             <span className="w-24 text-right text-gray-500">Method:</span>
             <div className="segmented">
               {[AccountingMethod.FIFO, AccountingMethod.SpecificID].map((m) => (
-                <button key={m} className={`segmented-btn ${dispositionMethod === m ? "active" : ""}`} onClick={() => { setDispositionMethod(m); setDispositionPreview(null); setShowLotPicker(false); setLotSelections(null); }}>
+                <button key={m} className={`segmented-btn ${dispositionMethod === m ? "active" : ""}`} onClick={() => { setDispositionMethod(m); setDispositionPreview(null); setShowLotPicker(false); setLotSelections(null); setUsingSavedSelections(false); }}>
                   {m}
                 </button>
               ))}
@@ -243,13 +279,13 @@ export function AddTransactionView() {
         {/* Date */}
         <div className="flex items-center gap-4">
           <span className="w-24 text-right text-gray-500">Date:</span>
-          <input type="date" className="input w-48" value={date} onChange={(e) => { setDate(e.target.value); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
+          <input type="date" className="input w-48" value={date} onChange={(e) => { setDate(e.target.value); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); setUsingSavedSelections(false); }} />
         </div>
 
         {/* Amount */}
         <div className="flex items-center gap-4">
           <span className="w-24 text-right text-gray-500">BTC Amount:</span>
-          <input className="input w-48" placeholder="0.00000000" value={amountStr} onChange={(e) => { setAmountStr(e.target.value); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
+          <input className="input w-48" placeholder="0.00000000" value={amountStr} onChange={(e) => { setAmountStr(e.target.value); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); setUsingSavedSelections(false); }} />
         </div>
 
         {/* Price */}
@@ -258,10 +294,10 @@ export function AddTransactionView() {
           {useLive ? (
             <span className="font-medium tabular-nums">{state.priceState.currentPrice ? formatUSD(state.priceState.currentPrice) : "..."}</span>
           ) : (
-            <input className="input w-48" placeholder="0.00" value={priceStr} onChange={(e) => setPriceStr(e.target.value)} />
+            <input className="input w-48" placeholder="0.00" value={priceStr} onChange={(e) => { setPriceStr(e.target.value); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); setUsingSavedSelections(false); }} />
           )}
           <label className="flex items-center gap-1 text-sm">
-            <input type="checkbox" checked={useLive} onChange={(e) => { setUseLive(e.target.checked); if (e.target.checked) state.fetchPrice(); }} />
+            <input type="checkbox" checked={useLive} onChange={(e) => { setUseLive(e.target.checked); if (e.target.checked) state.fetchPrice(); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); setUsingSavedSelections(false); }} />
             Live Price
           </label>
           {((type === TransactionType.Buy && incomeType) || type === TransactionType.Donation) && !useLive && state.livePriceEnabled && (
@@ -298,15 +334,26 @@ export function AddTransactionView() {
         {/* Exchange */}
         <div className="flex items-center gap-4">
           <span className="w-24 text-right text-gray-500">Exchange:</span>
-          <input className="input w-48" placeholder="e.g., Coinbase" value={exchange} onChange={(e) => { setExchange(e.target.value); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
+          <input className="input w-48" placeholder="e.g., Coinbase" value={exchange} onChange={(e) => { setExchange(e.target.value); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); setUsingSavedSelections(false); }} />
         </div>
 
         {/* Wallet */}
         <div className="flex items-center gap-4">
           <span className="w-24 text-right text-gray-500">Wallet:</span>
-          <input className="input w-48" placeholder="Defaults to exchange" value={wallet} onChange={(e) => { setWallet(e.target.value); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
+          <input className="input w-48" list="wallet-options" placeholder="Defaults to exchange" value={wallet} onChange={(e) => { setWallet(e.target.value); setDispositionPreview(null); setLotSelections(null); setShowLotPicker(false); setUsingSavedSelections(false); }} />
+          <datalist id="wallet-options">
+            {state.availableWallets.map((w) => <option key={w} value={w} />)}
+          </datalist>
           <span className="text-xs text-gray-400">(optional — for per-wallet cost basis tracking)</span>
         </div>
+        {showWalletWarning && (
+          <div className="flex items-center gap-4">
+            <span className="w-24" />
+            <div className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-xs p-2 rounded-lg">
+              ⚠️ Only {formatBTC(walletBTCAvailable!)} BTC available in "{wallet}". Per IRS rules (TD 9989), you cannot mix lots across wallets in a single sale. Record separate sales from each wallet, or transfer BTC between wallets first.
+            </div>
+          </div>
+        )}
 
         {/* Notes */}
         <div className="flex items-center gap-4">
@@ -314,6 +361,16 @@ export function AddTransactionView() {
           <input className="input w-72" placeholder="Optional notes" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={100} />
           <span className="text-xs text-gray-400">{notes.length}/100</span>
         </div>
+
+        {hasSavedSelections && saved && (
+          <div className="flex items-center gap-4">
+            <span className="w-24" />
+            <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-sm p-3 rounded-lg flex items-center justify-between flex-1">
+              <span>📋 Saved lot selections from Simulation ({formatBTC(saved.amountBTC)} BTC{saved.wallet ? ` in ${saved.wallet}` : ""})</span>
+              <button className="btn-primary text-xs px-3 py-1" onClick={useSavedSelectionsHandler}>Use Saved Selections</button>
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-3 pt-2">
           <button
@@ -339,6 +396,8 @@ export function AddTransactionView() {
               : currentLots}
             targetAmount={Number(amountStr)}
             saleDate={date ? new Date(date + "T12:00:00").toISOString() : undefined}
+            salePrice={type === TransactionType.Sell ? (useLive ? state.priceState.currentPrice || undefined : Number(priceStr) || undefined) : undefined}
+            initialSelections={usingSavedSelections && saved ? saved.lotSelections : undefined}
             onConfirm={handleDispositionLotConfirm}
             onCancel={handleDispositionLotCancel}
           />

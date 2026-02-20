@@ -1,8 +1,8 @@
 {
-  "latest": "1.3.3",
+  "latest": "1.3.4",
   "url": "https://sovereigntax.io",
-  "releaseDate": "2026-02-19",
-  "notes": "IRS compliance: remove LIFO/HIFO (only FIFO + Specific ID permitted). Add method selector and wallet column to lot picker.",
+  "releaseDate": "2026-02-20",
+  "notes": "Specific ID UX overhaul: sortable/color-coded lot picker, one-click Optimize button (tax-score algorithm), saved lot selections flow (Simulate → Record), multi-wallet warnings, wallet autocomplete. External audit fixes.",
   "downloads": {
     "macos": "https://sovereigntax.io/downloads/SovereignTax-macOS.dmg",
     "windows": "https://sovereigntax.io/downloads/SovereignTax-Windows.exe",

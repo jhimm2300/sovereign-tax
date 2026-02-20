@@ -282,11 +282,17 @@ function EditModal({ txn, onSave, onClose }: { txn: Transaction; onSave: (update
             <input className="input w-44 text-sm" value={amountStr} onChange={(e) => setAmountStr(e.target.value)} />
           </div>
 
-          {/* Price */}
+          {/* Price / FMV */}
           <div className="flex items-center gap-3">
-            <span className="w-20 text-right text-gray-500 text-sm">Price/BTC:</span>
+            <span className="w-20 text-right text-gray-500 text-sm">{type === TransactionType.Donation ? "FMV/BTC:" : "Price/BTC:"}</span>
             <input className="input w-44 text-sm" value={priceStr} onChange={(e) => setPriceStr(e.target.value)} />
           </div>
+          {type === TransactionType.Donation && (
+            <div className="flex items-center gap-3">
+              <span className="w-20" />
+              <span className="text-xs text-purple-500">Enter the Fair Market Value per BTC on the date of donation for your charitable deduction records.</span>
+            </div>
+          )}
 
           {/* Total */}
           <div className="flex items-center gap-3">

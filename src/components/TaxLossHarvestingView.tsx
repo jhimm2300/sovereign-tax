@@ -99,8 +99,9 @@ export function TaxLossHarvestingView() {
           {/* Lots Table */}
           <div className="card mb-6">
             <h3 className="font-semibold mb-3">Lots with Unrealized Losses ({losingLots.length})</h3>
-            <div className="grid grid-cols-6 gap-2 text-xs font-semibold text-gray-500 pb-2 border-b border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-7 gap-2 text-xs font-semibold text-gray-500 pb-2 border-b border-gray-200 dark:border-gray-700">
               <div>Date</div>
+              <div>Wallet</div>
               <div className="text-right">BTC</div>
               <div className="text-right">Cost Basis</div>
               <div className="text-right">Current Value</div>
@@ -108,8 +109,9 @@ export function TaxLossHarvestingView() {
               <div>Term</div>
             </div>
             {losingLots.map((lot) => (
-              <div key={lot.id} className="grid grid-cols-6 gap-2 py-2 text-sm border-b border-gray-100 dark:border-gray-800">
+              <div key={lot.id} className="grid grid-cols-7 gap-2 py-2 text-sm border-b border-gray-100 dark:border-gray-800">
                 <div>{formatDate(lot.purchaseDate)}</div>
+                <div className="text-xs text-gray-500 truncate" title={lot.wallet || lot.exchange}>{lot.wallet || lot.exchange}</div>
                 <div className="text-right tabular-nums">{formatBTC(lot.remainingBTC)}</div>
                 <div className="text-right tabular-nums">{formatUSD(lot.costBasis)}</div>
                 <div className="text-right tabular-nums">{formatUSD(lot.currentValue)}</div>

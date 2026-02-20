@@ -9,7 +9,7 @@ import { HelpPanel } from "./HelpPanel";
 
 export function SimulationView() {
   const state = useAppState();
-  const { allTransactions, priceState, fetchPrice, availableWallets } = state;
+  const { allTransactions, priceState, fetchPrice, availableWallets, setSavedLotSelections } = state;
   const [amountStr, setAmountStr] = useState("");
   const [priceStr, setPriceStr] = useState("");
   const [useLive, setUseLive] = useState(false);
@@ -18,6 +18,7 @@ export function SimulationView() {
   const [result, setResult] = useState<SaleRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showLotPicker, setShowLotPicker] = useState(false);
+  const [lastSelections, setLastSelections] = useState<LotSelection[] | null>(null);
 
   const fullResult = useMemo(() => calculate(allTransactions, method, state.recordedSales), [allTransactions, method, state.recordedSales]);
 
@@ -59,6 +60,15 @@ export function SimulationView() {
     const sim = simulateSale(amount, price, fullResult.lots, method, selections, wallet);
     if (!sim) { setError("Not enough BTC from selected lots"); return; }
     setResult(sim);
+    // Save lot selections for use in Record Sale / Add Transaction
+    setLastSelections(selections);
+    setSavedLotSelections({
+      lotSelections: selections,
+      amountBTC: amount,
+      wallet: selectedWallet,
+      method,
+      savedAt: new Date().toISOString(),
+    });
   };
 
   const handleLotPickerCancel = () => {
@@ -122,6 +132,7 @@ export function SimulationView() {
               ? fullResult.lots.filter((l) => (l.wallet || l.exchange || "").toLowerCase() === selectedWallet.toLowerCase())
               : fullResult.lots}
             targetAmount={Number(amountStr)}
+            salePrice={useLive ? priceState.currentPrice || undefined : Number(priceStr) || undefined}
             onConfirm={handleLotPickerConfirm}
             onCancel={handleLotPickerCancel}
           />
@@ -159,6 +170,14 @@ export function SimulationView() {
                 ))}
               </div>
             </>
+          )}
+
+          {/* Saved lot selections confirmation for Specific ID simulations */}
+          {lastSelections && isSpecificID && (
+            <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm p-3 rounded-lg mt-3 flex items-center gap-2">
+              <span>✅</span>
+              <span>Lot selections saved — go to <strong>Record Sale</strong> or <strong>Add Transaction</strong> with Specific ID and they'll be pre-filled automatically.</span>
+            </div>
           )}
         </div>
       )}

@@ -22,10 +22,39 @@ export function RecordSaleView() {
   const [selectedWallet, setSelectedWallet] = useState("");
   const [pendingConfirm, setPendingConfirm] = useState(false);
   const [duplicateMatches, setDuplicateMatches] = useState<typeof state.transactions>([]);
+  const [usingSavedSelections, setUsingSavedSelections] = useState(false);
 
   const fullResult = useMemo(() => calculate(state.allTransactions, method, state.recordedSales), [state.allTransactions, method, state.recordedSales]);
 
   const isSpecificID = method === AccountingMethod.SpecificID;
+
+  // Check for saved lot selections from Simulation
+  const saved = state.savedLotSelections;
+  const hasSavedSelections = isSpecificID && saved !== null
+    && saved.method === AccountingMethod.SpecificID
+    && (saved.wallet.toLowerCase() === selectedWallet.toLowerCase()) // wallet match (case-insensitive; both "" = all wallets)
+    && !showLotPicker && !lotSelections && !preview;
+
+  // Multi-wallet warning: check if selected wallet has enough BTC
+  const walletBTCAvailable = useMemo(() => {
+    if (!selectedWallet) return null;
+    const walletNorm = selectedWallet.trim().toLowerCase();
+    return fullResult.lots
+      .filter((l) => l.remainingBTC > 0 && (l.wallet || l.exchange || "").toLowerCase() === walletNorm)
+      .reduce((sum, l) => sum + l.remainingBTC, 0);
+  }, [selectedWallet, fullResult.lots]);
+  const requestedAmount = Number(amountStr) || 0;
+  const showWalletWarning = selectedWallet && walletBTCAvailable !== null && requestedAmount > 0 && requestedAmount > walletBTCAvailable + 0.00000001;
+
+  const useSavedSelections = () => {
+    if (!saved) return;
+    setError(null); setSuccess(null);
+    // Pre-fill amount from saved if not already set
+    if (!amountStr) setAmountStr(String(saved.amountBTC));
+    setUsingSavedSelections(true);
+    setShowLotPicker(true);
+    setPreview(null);
+  };
 
   const generatePreview = () => {
     setError(null); setSuccess(null);
@@ -36,6 +65,7 @@ export function RecordSaleView() {
 
     if (isSpecificID) {
       // Show lot picker instead of auto-preview
+      setUsingSavedSelections(false);
       setShowLotPicker(true);
       setPreview(null);
       return;
@@ -80,9 +110,12 @@ export function RecordSaleView() {
     await state.addTransaction(txn);
     // Link the SaleRecord to the source transaction for collision-proof Specific ID lookup
     await state.recordSale({ ...preview, sourceTransactionId: txn.id });
+    // Clear saved lot selections — lots are now consumed
+    state.setSavedLotSelections(null);
     setSuccess("Sale recorded successfully");
     setPreview(null);
     setLotSelections(null);
+    setUsingSavedSelections(false);
     setPendingConfirm(false);
     setDuplicateMatches([]);
     setAmountStr(""); setPriceStr("");
@@ -116,40 +149,51 @@ export function RecordSaleView() {
         <div className="flex gap-4 mb-4 flex-wrap">
           <div>
             <label className="text-xs text-gray-500 block mb-1">Sale Date</label>
-            <input type="date" className="input" value={saleDate} onChange={(e) => { setSaleDate(e.target.value); setPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
+            <input type="date" className="input" value={saleDate} onChange={(e) => { setSaleDate(e.target.value); setPreview(null); setLotSelections(null); setShowLotPicker(false); setUsingSavedSelections(false); }} />
           </div>
           <div>
             <label className="text-xs text-gray-500 block mb-1">BTC Amount</label>
-            <input className="input w-44" placeholder="0.00000000" value={amountStr} onChange={(e) => { setAmountStr(e.target.value); setPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
+            <input className="input w-44" placeholder="0.00000000" value={amountStr} onChange={(e) => { setAmountStr(e.target.value); setPreview(null); setLotSelections(null); setShowLotPicker(false); setUsingSavedSelections(false); }} />
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
               <label className="text-xs text-gray-500">Price/BTC</label>
-              <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={useLive} onChange={(e) => { setUseLive(e.target.checked); if (e.target.checked) state.fetchPrice(); }} /> Live</label>
+              <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={useLive} onChange={(e) => { setUseLive(e.target.checked); if (e.target.checked) state.fetchPrice(); setPreview(null); setLotSelections(null); setShowLotPicker(false); setUsingSavedSelections(false); }} /> Live</label>
             </div>
             {useLive ? (
               <div className="text-lg font-medium tabular-nums h-8">{state.priceState.currentPrice ? formatUSD(state.priceState.currentPrice) : "..."}</div>
             ) : (
-              <input className="input w-44" placeholder="0.00" value={priceStr} onChange={(e) => { setPriceStr(e.target.value); setPreview(null); setLotSelections(null); setShowLotPicker(false); }} />
+              <input className="input w-44" placeholder="0.00" value={priceStr} onChange={(e) => { setPriceStr(e.target.value); setPreview(null); setLotSelections(null); setShowLotPicker(false); setUsingSavedSelections(false); }} />
             )}
           </div>
           <div>
             <label className="text-xs text-gray-500 block mb-1">Method</label>
-            <select className="select" value={method} onChange={(e) => { setMethod(e.target.value as AccountingMethod); setPreview(null); setShowLotPicker(false); setLotSelections(null); }}>
+            <select className="select" value={method} onChange={(e) => { setMethod(e.target.value as AccountingMethod); setPreview(null); setShowLotPicker(false); setLotSelections(null); setUsingSavedSelections(false); }}>
               {Object.values(AccountingMethod).map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
           {state.availableWallets.length > 1 && (
             <div>
               <label className="text-xs text-gray-500 block mb-1">Wallet</label>
-              <select className="select" value={selectedWallet} onChange={(e) => { setSelectedWallet(e.target.value); setPreview(null); setLotSelections(null); setShowLotPicker(false); }}>
+              <select className="select" value={selectedWallet} onChange={(e) => { setSelectedWallet(e.target.value); setPreview(null); setLotSelections(null); setShowLotPicker(false); setUsingSavedSelections(false); }}>
                 <option value="">All Wallets</option>
                 {state.availableWallets.map((w) => <option key={w} value={w}>{w}</option>)}
               </select>
             </div>
           )}
         </div>
-        <div className="flex gap-3">
+        {showWalletWarning && (
+          <div className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-xs p-2 rounded-lg mt-2">
+            ⚠️ Only {formatBTC(walletBTCAvailable!)} BTC available in "{selectedWallet}". Per IRS rules (TD 9989), you cannot mix lots across wallets in a single sale. Record separate sales from each wallet, or transfer BTC between wallets first.
+          </div>
+        )}
+        {hasSavedSelections && saved && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-sm p-3 rounded-lg mt-3 flex items-center justify-between">
+            <span>📋 You have saved lot selections from Simulation ({formatBTC(saved.amountBTC)} BTC{saved.wallet ? ` in ${saved.wallet}` : ""})</span>
+            <button className="btn-primary text-xs px-3 py-1" onClick={useSavedSelections}>Use Saved Selections</button>
+          </div>
+        )}
+        <div className="flex gap-3 mt-3">
           <button className="btn-secondary" onClick={generatePreview}>
             {isSpecificID ? "🔍 Select Lots" : "👁️ Preview"}
           </button>
@@ -169,6 +213,8 @@ export function RecordSaleView() {
               : fullResult.lots}
             targetAmount={Number(amountStr)}
             saleDate={new Date(saleDate + "T12:00:00").toISOString()}
+            salePrice={useLive ? state.priceState.currentPrice || undefined : Number(priceStr) || undefined}
+            initialSelections={usingSavedSelections && saved ? saved.lotSelections : undefined}
             onConfirm={handleLotPickerConfirm}
             onCancel={handleLotPickerCancel}
           />

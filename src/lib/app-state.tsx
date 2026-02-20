@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { Transaction, SaleRecord, ColumnMapping, ImportRecord, Preferences } from "./models";
 import { AccountingMethod, TransactionType } from "./types";
-import { calculate, simulateSale as simSale } from "./cost-basis";
+import { calculate, simulateSale as simSale, LotSelection } from "./cost-basis";
 import { fetchBTCPrice, fetchHistoricalPrice } from "./price-service";
 import { transactionNaturalKey } from "./utils";
 import * as persistence from "./persistence";
@@ -15,6 +15,15 @@ interface PriceState {
   lastUpdated: Date | null;
   isLoading: boolean;
   error: string | null;
+}
+
+/** Session-only saved lot selections from Simulation → Record Sale / Add Transaction */
+export interface SavedLotSelections {
+  lotSelections: LotSelection[];
+  amountBTC: number;
+  wallet: string; // "" means all wallets
+  method: AccountingMethod;
+  savedAt: string; // ISO timestamp
 }
 
 interface AppStateContextType {
@@ -39,6 +48,10 @@ interface AppStateContextType {
   setSelectedWallet: (wallet: string | null) => void;
   livePriceEnabled: boolean;
   setLivePriceEnabled: (enabled: boolean) => void;
+
+  // Session-only: saved lot selections from Simulation
+  savedLotSelections: SavedLotSelections | null;
+  setSavedLotSelections: (saved: SavedLotSelections | null) => void;
 
   // Security
   isUnlocked: boolean;
@@ -103,6 +116,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [privacyBlur, setPrivacyBlur] = useState(prefs.privacyBlur ?? false);
   const [selectedWallet, setSelectedWallet] = useState<string | null>(prefs.selectedWallet ?? null);
   const [livePriceEnabled, setLivePriceEnabled] = useState(prefs.livePriceEnabled ?? true);
+  const [savedLotSelections, setSavedLotSelections] = useState<SavedLotSelections | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
 
   const [priceState, setPriceState] = useState<PriceState>({
@@ -148,6 +162,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setRecordedSales([]);
       setImportHistory({});
       setAuditLog([]);
+      setSavedLotSelections(null);
     }
   }, [isUnlocked]);
 
@@ -366,6 +381,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setTransactions([]);
     setRecordedSales([]);
     setImportHistory({});
+    setSavedLotSelections(null);
     persistence.clearAllData();
     await appendAuditLog(AuditAction.DataCleared, "All transaction data cleared");
   }, [appendAuditLog]);
@@ -434,6 +450,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setRecordedSales(result.data.recordedSales);
     setImportHistory(result.data.importHistory);
     setAuditLog(result.data.auditLog);
+    // Invalidate session-only state — restored dataset may have different lots
+    setSavedLotSelections(null);
 
     // Reload preferences into UI state so restored settings take effect immediately
     if (result.data.preferences) {
@@ -469,6 +487,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setSelectedWallet,
     livePriceEnabled,
     setLivePriceEnabled,
+    savedLotSelections,
+    setSavedLotSelections,
     isUnlocked,
     setIsUnlocked,
     unlockWithPIN,

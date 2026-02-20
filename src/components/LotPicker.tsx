@@ -12,13 +12,36 @@ interface LotPickerProps {
   lots: Lot[];
   targetAmount: number;
   saleDate?: string; // ISO date string — used for accurate holding period display (defaults to today)
+  salePrice?: number; // USD per BTC — used by Optimize to compute estimated tax per lot
+  initialSelections?: LotSelection[]; // Pre-fill from saved simulation selections
   onConfirm: (selections: LotSelection[]) => void;
   onCancel: () => void;
 }
 
-export function LotPicker({ lots, targetAmount, saleDate, onConfirm, onCancel }: LotPickerProps) {
+type SortField = "date" | "wallet" | "available" | "cost" | "daysHeld" | "term";
+type SortDir = "asc" | "desc";
+
+export function LotPicker({ lots, targetAmount, saleDate, salePrice, initialSelections, onConfirm, onCancel }: LotPickerProps) {
   const availableLots = lots.filter((l) => l.remainingBTC > 0);
-  const [selections, setSelections] = useState<Record<string, number>>({});
+
+  // Build initial selection map from saved selections (if provided and lot IDs still exist)
+  const buildInitialMap = (): Record<string, number> => {
+    if (!initialSelections || initialSelections.length === 0) return {};
+    const availableIds = new Set(availableLots.map((l) => l.id));
+    const map: Record<string, number> = {};
+    for (const sel of initialSelections) {
+      if (availableIds.has(sel.lotId)) {
+        const lot = availableLots.find((l) => l.id === sel.lotId);
+        // Clamp to current available amount (lot may have been partially consumed since simulation)
+        map[sel.lotId] = lot ? Math.min(sel.amountBTC, lot.remainingBTC) : sel.amountBTC;
+      }
+    }
+    return map;
+  };
+
+  const [selections, setSelections] = useState<Record<string, number>>(buildInitialMap);
+  const [sortField, setSortField] = useState<SortField>("date");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   const totalSelected = Object.values(selections).reduce((a, b) => a + b, 0);
   const remaining = targetAmount - totalSelected;
@@ -54,6 +77,42 @@ export function LotPicker({ lots, targetAmount, saleDate, onConfirm, onCancel }:
     });
   };
 
+  /**
+   * Auto-select lots to reduce tax burden.
+   * Scores each lot by estimated tax per BTC using assumed rates (37% ST, 15% LT).
+   * Losses get negative scores (tax savings), so they're picked first.
+   * When no sale price is available (e.g. donations), falls back to long-term first + highest cost basis.
+   */
+  const optimizeSelections = () => {
+    const refDate = saleDate || new Date().toISOString();
+    const ST_RATE = 0.37;
+    const LT_RATE = 0.15;
+
+    const ranked = availableLots
+      .map((lot) => {
+        const isLongTerm = isMoreThanOneYear(lot.purchaseDate, refDate);
+        const costBasisPerBTC = lot.totalCost / lot.amountBTC; // fee-inclusive
+        const rate = isLongTerm ? LT_RATE : ST_RATE;
+        // Estimated tax per BTC: positive = tax owed, negative = tax saved (loss)
+        const taxScore = salePrice
+          ? (salePrice - costBasisPerBTC) * rate
+          : (isLongTerm ? -1e9 : 0) - costBasisPerBTC; // fallback: long-term first, then highest basis
+        return { lot, taxScore };
+      })
+      // Lowest tax score first (losses first, then smallest gains)
+      .sort((a, b) => a.taxScore - b.taxScore);
+
+    let needed = targetAmount;
+    const newSelections: Record<string, number> = {};
+    for (const { lot } of ranked) {
+      if (needed <= 0.00000001) break;
+      const take = Math.min(lot.remainingBTC, needed);
+      newSelections[lot.id] = take;
+      needed -= take;
+    }
+    setSelections(newSelections);
+  };
+
   const handleConfirm = () => {
     const result: LotSelection[] = Object.entries(selections)
       .filter(([, amt]) => amt > 0)
@@ -63,6 +122,56 @@ export function LotPicker({ lots, targetAmount, saleDate, onConfirm, onCancel }:
 
   // Use sale date for accurate holding period display; fall back to today for simulations
   const referenceDate = saleDate || new Date().toISOString();
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir("asc");
+    }
+  };
+
+  const sortIndicator = (field: SortField) => {
+    if (sortField !== field) return "";
+    return sortDir === "asc" ? " \u25B2" : " \u25BC";
+  };
+
+  const sortedLots = useMemo(() => {
+    const lotsWithMeta = availableLots.map((lot) => ({
+      lot,
+      daysHeld: daysBetween(lot.purchaseDate, referenceDate),
+      isLongTerm: isMoreThanOneYear(lot.purchaseDate, referenceDate),
+      walletName: (lot.wallet || lot.exchange || "").toLowerCase(),
+    }));
+
+    lotsWithMeta.sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case "date":
+          cmp = new Date(a.lot.purchaseDate).getTime() - new Date(b.lot.purchaseDate).getTime();
+          break;
+        case "wallet":
+          cmp = a.walletName.localeCompare(b.walletName);
+          break;
+        case "available":
+          cmp = a.lot.remainingBTC - b.lot.remainingBTC;
+          break;
+        case "cost":
+          cmp = a.lot.pricePerBTC - b.lot.pricePerBTC;
+          break;
+        case "daysHeld":
+          cmp = a.daysHeld - b.daysHeld;
+          break;
+        case "term":
+          cmp = (a.isLongTerm ? 1 : 0) - (b.isLongTerm ? 1 : 0);
+          break;
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+
+    return lotsWithMeta;
+  }, [availableLots, sortField, sortDir, referenceDate]);
 
   return (
     <div className="card">
@@ -81,23 +190,24 @@ export function LotPicker({ lots, targetAmount, saleDate, onConfirm, onCancel }:
 
       <div className="grid grid-cols-[40px_1fr_1fr_1fr_1fr_1fr_1fr_120px] gap-2 text-xs font-semibold text-gray-500 pb-2 border-b border-gray-200 dark:border-gray-700">
         <div></div>
-        <div>Date</div>
-        <div>Wallet</div>
-        <div className="text-right">Available</div>
-        <div className="text-right">Cost/BTC</div>
-        <div className="text-right">Days Held</div>
-        <div>Term</div>
+        <div className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none" onClick={() => handleSort("date")}>Date{sortIndicator("date")}</div>
+        <div className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none" onClick={() => handleSort("wallet")}>Wallet{sortIndicator("wallet")}</div>
+        <div className="text-right cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none" onClick={() => handleSort("available")}>Available{sortIndicator("available")}</div>
+        <div className="text-right cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none" onClick={() => handleSort("cost")}>Cost/BTC{sortIndicator("cost")}</div>
+        <div className="text-right cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none" onClick={() => handleSort("daysHeld")}>Days Held{sortIndicator("daysHeld")}</div>
+        <div className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none" onClick={() => handleSort("term")}>Term{sortIndicator("term")}</div>
         <div className="text-right">Amount to Sell</div>
       </div>
 
-      {availableLots
-        .sort((a, b) => new Date(a.purchaseDate).getTime() - new Date(b.purchaseDate).getTime())
-        .map((lot) => {
+      {sortedLots.map(({ lot, daysHeld, isLongTerm }) => {
           const isSelected = !!selections[lot.id];
-          const daysHeld = daysBetween(lot.purchaseDate, referenceDate);
-          const isLongTerm = isMoreThanOneYear(lot.purchaseDate, referenceDate);
+          const termBg = isSelected
+            ? "bg-blue-50 dark:bg-blue-900/10"
+            : isLongTerm
+              ? "bg-green-50/40 dark:bg-green-900/5"
+              : "bg-orange-50/40 dark:bg-orange-900/5";
           return (
-            <div key={lot.id} className={`grid grid-cols-[40px_1fr_1fr_1fr_1fr_1fr_1fr_120px] gap-2 py-2 text-sm border-b border-gray-100 dark:border-gray-800 ${isSelected ? "bg-blue-50 dark:bg-blue-900/10" : ""}`}>
+            <div key={lot.id} className={`grid grid-cols-[40px_1fr_1fr_1fr_1fr_1fr_1fr_120px] gap-2 py-2 text-sm border-b border-gray-100 dark:border-gray-800 ${termBg}`}>
               <div>
                 <input
                   type="checkbox"
@@ -140,11 +250,15 @@ export function LotPicker({ lots, targetAmount, saleDate, onConfirm, onCancel }:
         </div>
       )}
 
-      <div className="flex gap-3 mt-4">
+      <div className="flex items-center gap-3 mt-4">
         <button className="btn-primary" disabled={!isValid} onClick={handleConfirm}>
           Confirm Selection
         </button>
+        <button className="btn-secondary" onClick={optimizeSelections}>
+          ✨ Optimize
+        </button>
         <button className="btn-secondary" onClick={onCancel}>Cancel</button>
+        <span className="text-xs text-gray-400 ml-2">Optimize picks lots with the lowest estimated tax (losses first, then smallest gains)</span>
       </div>
     </div>
   );
